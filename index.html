@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPhO Computational Physics 2024</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="challenge">
+        <h1>BPhO Computational Physics Challenge 2024</h1>
+        <p>Here are the implemented challenges for the BPhO Computational Physics 2024 competition.</p>
+        <a href="https://github.com/BobDaGithubAccount/bcpho">You can find the Github repository here</a>
+        <!-- TODO: Add link to github repository -->
+    </div>
+    
+    <h2>Challenge 1</h2>
+    <p1>A numeric approach to the dragless particle model</p1><br>
+    <label for="challenge1_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge1_angle" value="45"><br>
+    <label for="challenge1-gravity">Gravity (g):</label>
+    <input type="number" id="challenge1_gravity" value="9.81"><br>
+    <label for="challenge1_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge1_speed" value="20"><br>
+    <label for="challenge1_height">Launch Height (h):</label>
+    <input type="number" id="challenge1_height" value="0"><br>
+    <canvas id="challenge1_canvas" width="800" height="400"></canvas>
+
+    <h2>Challenge 1.5</h2>
+    <p1>A numeric approach using lagrangians and the action potential principle </p1><br>
+    <label for="challenge1.5_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge1.5_angle" value="30"><br>
+    <label for="challenge1.5_gravity">Gravity (g):</label>
+    <input type="number" id="challenge1.5_gravity" value="9.81"><br>
+    <label for="challenge1.5_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge1.5_speed" value="15"><br>
+    <label for="challenge1.5_height">Launch Height (h):</label>
+    <input type="number" id="challenge1.5_height" value="0"><br>
+    <button id="challenge1.5_startSimulation">Start Simulation</button><br>
+    <canvas id="challenge1.5_canvas" width="800" height="400"></canvas><br>
+
+    <script src="/static/client_1.js"></script>
+    <script src="/static/client_1_5.js"></script>
+</body>
+</html>
