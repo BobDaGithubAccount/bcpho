@@ -8,7 +8,8 @@
     "copy-files": "cpx './src/**/*' './dist/src'",
     "run": "node dist/server.js",
     "start": "npm run build && npm run run",
-    "master": "npm run build && node dist/index.js"
+    "master": "npm run build && node dist/index.js",
+    "worker": "node pages_worker.js"
   },
   "keywords": [],
   "author": "",
