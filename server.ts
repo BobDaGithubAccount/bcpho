@@ -1,5 +1,7 @@
 import path from 'path';
 import express, { Request, Response } from 'express';
+import fs from 'fs';
+import { exec, spawn } from 'child_process';
 
 const app = express();
 const PORT = 8000;
@@ -16,3 +18,6 @@ app.get('/', (req: Request, res: Response) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+const srcPath = path.resolve(__dirname, '../src');
+console.log(srcPath);

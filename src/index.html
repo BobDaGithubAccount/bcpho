@@ -1,40 +1,34 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>BPhO_CompPhys2024</title>
-        <style>
-            .challenge {
-                width: 100%;
-                height: 100px;
-                border: 1px solid black;
-                margin-bottom: 10px;
-            }
-            canvas {
-                border: 1px solid black;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="challenge">
-            <h1>
-                BPhO Computational Physics 2024
-            </h1>
-            <p1>
-                Here are the implemented challenges for the BPhO Computational Physics 2024 competition.
-            </p1>
-        </div>
-        
-        <h2>Challenge 1</h2>
-        <label for="angle">Launch Angle (θ):</label>
-        <input type="number" id="angle" value="45"><br>
-        <label for="gravity">Gravity (g):</label>
-        <input type="number" id="gravity" value="9.81"><br>
-        <label for="speed">Launch Speed (u):</label>
-        <input type="number" id="speed" value="20"><br>
-        <label for="height">Launch Height (h):</label>
-        <input type="number" id="height" value="0"><br>
-        <canvas id="canvas" width="800" height="400"></canvas>
-                
-        <script src="/static/client_1.js"></script>
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPhO Computational Physics 2024</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="challenge">
+        <h1>BPhO Computational Physics Challenge 2024</h1>
+        <p>Here are the implemented challenges for the BPhO Computational Physics 2024 competition.</p>
+        <a href="https://github.com/BobDaGithubAccount/bcpho">You can find the Github repository here</a>
+        <!-- TODO: Add link to github repository -->
+    </div>
+    
+    <h2>Challenge 1</h2>
+    <label for="challenge1_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge1_angle" value="45"><br>
+    <label for="challenge1-gravity">Gravity (g):</label>
+    <input type="number" id="challenge1_gravity" value="9.81"><br>
+    <label for="challenge1_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge1_speed" value="20"><br>
+    <label for="challenge1_height">Launch Height (h):</label>
+    <input type="number" id="challenge1_height" value="0"><br>
+    <canvas id="challenge1_canvas" width="800" height="400"></canvas>
+    
+    <script src="/static/client_1.js"></script>
+</body>
 </html>
