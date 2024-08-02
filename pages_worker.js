@@ -29,8 +29,9 @@ function replaceStaticReferences(dir) {
         if (stat.isDirectory()) {
             replaceStaticReferences(filePath);
         } else {
+            console.log('Processing file:', filePath);
             let content = fs.readFileSync(filePath, 'utf8');
-            content = content.replace(`src="/static/"`, `src="/bcpho/static/"`);
+            content = content.replaceAll(`src="/static/`, `src="/bcpho/static/`);
             fs.writeFileSync(filePath, content, 'utf8');
         }
     });
