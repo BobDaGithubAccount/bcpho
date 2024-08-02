@@ -4,6 +4,8 @@ Welcome to our submission for the BPhO Computational Physics Challenge 2024!
 
 ## Installation & Use
 
+To use the project out-of-the-box, go [here](https://bobdagithubaccount.github.io/bcpho/).
+
 To install and use this project, follow these steps:
 
 1. Clone the repository.
