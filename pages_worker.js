@@ -18,3 +18,24 @@ execSync(`cp -R ${srcDir} ${ghPagesDir}`);
 execSync(`find ${ghPagesDir} -mindepth 1 -maxdepth 1 ! -name 'index.html' ! -name 'static' -exec mv -t ${staticDir} {} +`);
 
 console.log('Files copied and moved successfully!');
+
+function replaceStaticReferences(dir) {
+    const files = fs.readdirSync(dir);
+
+    files.forEach(file => {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+
+        if (stat.isDirectory()) {
+            replaceStaticReferences(filePath);
+        } else {
+            let content = fs.readFileSync(filePath, 'utf8');
+            content = content.replace(/static/g, 'bcpho/static');
+            fs.writeFileSync(filePath, content, 'utf8');
+        }
+    });
+}
+
+replaceStaticReferences(ghPagesDir);
+
+console.log('References updated successfully!');
