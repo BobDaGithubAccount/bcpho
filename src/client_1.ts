@@ -1,5 +1,6 @@
 const canvas = document.getElementById('challenge1_canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+ctx.translate(canvas.width / 2, canvas.height / 2);
 const angleInput = document.getElementById('challenge1_angle') as HTMLInputElement;
 const gravityInput = document.getElementById('challenge1_gravity') as HTMLInputElement;
 const speedInput = document.getElementById('challenge1_speed') as HTMLInputElement;
@@ -11,7 +12,7 @@ let isDragging = false;
 let startX: number, startY: number;
 
 function drawAxes(): void {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height)
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
