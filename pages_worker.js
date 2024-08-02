@@ -30,7 +30,7 @@ function replaceStaticReferences(dir) {
             replaceStaticReferences(filePath);
         } else {
             let content = fs.readFileSync(filePath, 'utf8');
-            content = content.replace(/static/g, 'bcpho/static');
+            content = content.replace(`src="/static/"`, `src="/bcpho/static/"`);
             fs.writeFileSync(filePath, content, 'utf8');
         }
     });
