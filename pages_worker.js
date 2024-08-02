@@ -15,11 +15,6 @@ fs.mkdirSync(staticDir);
 
 execSync(`cp -R ${srcDir} ${ghPagesDir}`);
 
-fs.readdirSync(ghPagesDir).forEach(file => {
-    const filePath = path.join(ghPagesDir, file);
-    if (file !== 'index.html') {
-        fs.renameSync(filePath, path.join(staticDir, file));
-    }
-});
+execSync(`find ${ghPagesDir} -mindepth 1 -maxdepth 1 ! -name 'index.html' ! -name 'static' -exec mv -t ${staticDir} {} +`);
 
 console.log('Files copied and moved successfully!');
