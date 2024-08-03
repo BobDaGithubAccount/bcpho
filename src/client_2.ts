@@ -1,11 +1,14 @@
 (function() {
-const canvas = document.getElementById('challenge1_canvas') as HTMLCanvasElement;
+// HTML Elements
+const canvas = document.getElementById('challenge2_canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 ctx.translate(canvas.width / 2, canvas.height / 2);
-const angleInput = document.getElementById('challenge1_angle') as HTMLInputElement;
-const gravityInput = document.getElementById('challenge1_gravity') as HTMLInputElement;
-const speedInput = document.getElementById('challenge1_speed') as HTMLInputElement;
-const heightInput = document.getElementById('challenge1_height') as HTMLInputElement;
+
+const angleInput = document.getElementById('challenge2_angle') as HTMLInputElement;
+const gravityInput = document.getElementById('challenge2_gravity') as HTMLInputElement;
+const speedInput = document.getElementById('challenge2_speed') as HTMLInputElement;
+const heightInput = document.getElementById('challenge2_height') as HTMLInputElement;
+
 let scale = 1;
 let offsetX = 0;
 let offsetY = 0;
@@ -14,7 +17,7 @@ let startX: number, startY: number;
 let points: { x: number, y: number }[] = [];
 
 function drawAxes(): void {
-    ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height)
+    ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
@@ -34,41 +37,55 @@ function drawAxes(): void {
     ctx.restore();
 }
 
-function drawProjectile(): void {
-    const angle = parseFloat(angleInput.value) * (Math.PI / 180);
-    const gravity = parseFloat(gravityInput.value);
-    const speed = parseFloat(speedInput.value);
-    const height = parseFloat(heightInput.value);
-    const timeIncrement = 0.1;
+function calculateTrajectory(): void {
+    const angle = parseFloat(angleInput.value) * Math.PI / 180;
+    const g = parseFloat(gravityInput.value);
+    const u = parseFloat(speedInput.value);
+    const h = parseFloat(heightInput.value);
 
+    //Using the direct one off of the sheet doesnt seem to work D:
+    const R = (u * Math.cos(angle) / g) * (u * Math.sin(angle) + Math.sqrt((u * Math.sin(angle)) ** 2 + 2 * g * h));
+    // const R = ((u^2)/g)*((Math.sin(angle*2)/2) + Math.cos(angle)*Math.sqrt(Math.sin(angle)*Math.sin(angle) + ((2*g*h)/u)));
+    const step = R / 100; // 100 steps for the trajectory
+
+    points = [];
+    for (let x = 0; x <= R; x += step) {
+        const t = x / (u * Math.cos(angle));
+        const y = h + x * Math.tan(angle) - (g / (2 * u ** 2 * Math.cos(angle) ** 2)) * x ** 2;
+        points.push({ x, y });
+    }
+}
+
+function drawProjectile(): void {
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
-    let t = 0;
-    let x = 0;
-    let y = height;
-    points = [];
-
-    while (y >= 0) {
-        x = speed * t * Math.cos(angle);
-        y = height + speed * t * Math.sin(angle) - 0.5 * gravity * t * t;
-        points.push({ x, y });
-        t += timeIncrement;
-    }
-
     ctx.beginPath();
-    ctx.moveTo(points[0].x, -points[0].y);
-    for (const point of points) {
-        ctx.lineTo(point.x, -point.y);
+    for (let i = 0; i < points.length; i++) {
+        const point = points[i];
+        if (i === 0) {
+            ctx.moveTo(point.x, -point.y);
+        } else {
+            ctx.lineTo(point.x, -point.y);
+        }
     }
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = 'blue';
     ctx.stroke();
+
+    if (points.length > 0) {
+        const apogee = points.reduce((prev, curr) => curr.y > prev.y ? curr : prev);
+        ctx.beginPath();
+        ctx.arc(apogee.x, -apogee.y, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = 'red';
+        ctx.fill();
+    }
 
     ctx.restore();
 }
 
 function draw(): void {
+    calculateTrajectory();
     drawAxes();
     drawProjectile();
 }
@@ -129,4 +146,5 @@ canvas.addEventListener('mouseup', handleMouseUp);
 canvas.addEventListener('wheel', handleWheel);
 
 draw();
+
 })();
