@@ -1,7 +1,7 @@
 (function() {
 const canvas = document.getElementById('challenge3_canvas') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
-
+const ctx = canvas.getContext('2d')!;
+ctx.translate(canvas.width / 2, canvas.height / 2);
 const gravityInput = document.getElementById('challenge3_gravity') as HTMLInputElement;
 const fixedXInput = document.getElementById('challenge3_fixedX') as HTMLInputElement;
 const fixedYInput = document.getElementById('challenge3_fixedY') as HTMLInputElement;
@@ -16,7 +16,6 @@ let lowBallPoints: { x: number, y: number }[] = [];
 let highBallPoints: { x: number, y: number }[] = [];
 
 function drawAxes(): void {
-    if (!ctx) return;
     ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
     ctx.save();
     ctx.translate(offsetX, offsetY);
@@ -58,7 +57,7 @@ function calculateTrajectories(): void {
     const discriminant = (B * B) - (4 * A * C);
 
     if (discriminant < 0) {
-        console.error("No real solution exists for the given input values", discriminant);
+        // console.error("No real solution exists for the given input values", discriminant);
         return;
     }
 
