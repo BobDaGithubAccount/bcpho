@@ -157,5 +157,5 @@
     gravityInput.addEventListener('input', draw);
     speedInput.addEventListener('input', draw);
     heightInput.addEventListener('input', draw);
-    drawAxes();
+    draw();
 })();
