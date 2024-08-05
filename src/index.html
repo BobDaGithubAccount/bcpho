@@ -6,7 +6,7 @@
     <title>BPhO Computational Physics 2024</title>
     <style>
         canvas {
-            border: 1px solid black;
+            border: 1px solid rgb(0, 0, 0);
         }
     </style>
 </head>
@@ -55,7 +55,7 @@
     <canvas id="challenge2_canvas" width="800" height="400"></canvas>
 
     <h2>Challenge 3</h2>
-    <p1>A simulation of projectile motion with paramaters X,Y constraining the configuration space</p1><br>
+    <p1>An analytic simulation of projectile motion with intersection paramaters (X,Y) constraining the configuration space</p1><br>
     <label for="challenge3_gravity">Gravity (g):</label>
     <input type="number" id="challenge3_gravity" value="9.81"><br>
     <label for="challenge3_gravity">Height (h):</label>
@@ -66,9 +66,22 @@
     <input type="number" id="challenge3_fixedY" value="100"><br>
     <canvas id="challenge3_canvas" width="800" height="400"></canvas>
 
+    <h2>Challenge 4</h2>
+    <p1>An analytic simulation comparing a trajectory of specified paramaters against the maximum ranged trajectory under variation w.r.t the launch angle</p1><br>
+    <label for="challenge4_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge4_angle" value="50"><br>
+    <label for="challenge4_gravity">Gravity (g):</label>
+    <input type="number" id="challenge4_gravity" value="9.81"><br>
+    <label for="challenge4_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge4_speed" value="50"><br>
+    <label for="challenge4_height">Launch Height (h):</label>
+    <input type="number" id="challenge4_height" value="10"><br>
+    <canvas id="challenge4_canvas" width="800" height="400"></canvas>
+
     <script src="/static/client_1.js"></script>
-    <script src="/static/client_1_5.js"></script>
+    <script src="/static/client_1.5.js"></script>
     <script src="/static/client_2.js"></script>
     <script src="/static/client_3.js"></script>
+    <script src="/static/client_4.js"></script>
 </body>
 </html>
