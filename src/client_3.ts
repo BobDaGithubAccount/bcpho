@@ -175,6 +175,38 @@ function handleMouseMove(e: MouseEvent): void {
         offsetY = e.clientY - startY;
         draw();
     }
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left - canvas.width / 2 - offsetX) / scale;
+    const y = -(e.clientY - rect.top - canvas.height / 2 - offsetY) / scale;
+    draw();
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = 'black';
+
+    const points = [...lowBallPoints, ...highBallPoints];
+
+    if (points.length > 0) {
+        const closestPoint = points.reduce((prev, curr) => {
+            const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
+            const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
+            return currDist < prevDist ? curr : prev;
+        });
+
+        const isLowBallPoint = lowBallPoints.includes(closestPoint);
+        const textColor = isLowBallPoint ? 'green' : 'blue';
+        const pointColor = isLowBallPoint ? 'green' : 'blue';
+
+        ctx.fillStyle = textColor;
+        ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
+
+        ctx.beginPath();
+        ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
+        ctx.fillStyle = pointColor;
+        ctx.fill();
+    }
+
+    ctx.restore();
 }
 
 function handleMouseUp(): void {
