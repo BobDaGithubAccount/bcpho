@@ -148,8 +148,8 @@ function handleMouseMove(e: MouseEvent): void {
         });
 
         const isPoint = points.includes(closestPoint);
-        const textColor = isPoint ? 'red' : 'blue';
-        const pointColor = isPoint ? 'red' : 'blue';
+        const textColor = isPoint ? 'blue' : 'red';
+        const pointColor = isPoint ? 'blue' : 'red';
 
         ctx.fillStyle = textColor;
         ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
