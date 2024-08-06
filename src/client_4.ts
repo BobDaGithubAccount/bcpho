@@ -2,17 +2,20 @@
 const canvas = document.getElementById('challenge4_canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 ctx.translate(canvas.width / 2, canvas.height / 2);
+
 const angleInput = document.getElementById('challenge4_angle') as HTMLInputElement;
 const gravityInput = document.getElementById('challenge4_gravity') as HTMLInputElement;
 const speedInput = document.getElementById('challenge4_speed') as HTMLInputElement;
 const heightInput = document.getElementById('challenge4_height') as HTMLInputElement;
+const telemetry = document.getElementById('challenge4_telemetry') as HTMLInputElement;
+
 let scale = 1;
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
 let startX: number, startY: number;
-let points: { x: number, y: number }[] = [];
-let maxRangePoints: { x: number, y: number }[] = [];
+const curves: Map<string, { points: { x: number, y: number }[] }> = new Map();
+let telemetryArray: string[] = [];
 
 function drawAxes(): void {
     ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
@@ -35,76 +38,38 @@ function drawAxes(): void {
     ctx.restore();
 }
 
-function calculateTrajectory(): void {
-    const angle = parseFloat(angleInput.value) * Math.PI / 180;
-    const g = parseFloat(gravityInput.value);
-    const u = parseFloat(speedInput.value);
-    const h = parseFloat(heightInput.value);
-
+function calculateTrajectory(angle: number, g: number, u: number, h: number): { x: number, y: number }[] {
     const R = (u * Math.cos(angle) / g) * (u * Math.sin(angle) + Math.sqrt((u * Math.sin(angle)) ** 2 + 2 * g * h));
     const step = R / 100;
+    const points: { x: number, y: number }[] = [];
 
-    points = [];
     for (let x = 0; x <= R; x += step) {
         const t = x / (u * Math.cos(angle));
         const y = h + x * Math.tan(angle) - (g / (2 * u ** 2 * Math.cos(angle) ** 2)) * x ** 2;
         points.push({ x, y });
     }
+
+    return points;
 }
 
-function drawProjectile(): void {
+function drawCurve(color: string): void {
+    const curve = curves.get(color);
+    if (!curve) return;
+
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
     ctx.beginPath();
-    for (let i = 0; i < points.length; i++) {
-        const point = points[i];
+    for (let i = 0; i < curve.points.length; i++) {
+        const point = curve.points[i];
         if (i === 0) {
             ctx.moveTo(point.x, -point.y);
         } else {
             ctx.lineTo(point.x, -point.y);
         }
     }
-    ctx.strokeStyle = 'blue';
-    ctx.stroke();
-
-    ctx.restore();
-}
-
-function calculateMaxTrajectory(): void {
-    const g = parseFloat(gravityInput.value);
-    const u = parseFloat(speedInput.value);
-    const h = parseFloat(heightInput.value);
-    const angle = Math.asin(1/(Math.sqrt(2 + (2*g*h)/(u**2))));
-
-    const R = (u * Math.cos(angle) / g) * (u * Math.sin(angle) + Math.sqrt((u * Math.sin(angle)) ** 2 + 2 * g * h));
-    const step = R / 100; // 100 steps for the trajectory
-
-    maxRangePoints = [];
-    for (let x = 0; x <= R; x += step) {
-        const t = x / (u * Math.cos(angle));
-        const y = h + x * Math.tan(angle) - (g / (2 * u ** 2 * Math.cos(angle) ** 2)) * x ** 2;
-        maxRangePoints.push({ x, y });
-    }
-
-}
-
-function drawMaxRangeProjectile(): void {
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.scale(scale, scale);
-
-    ctx.beginPath();
-    for (let i = 0; i < maxRangePoints.length; i++) {
-        const point = maxRangePoints[i];
-        if (i === 0) {
-            ctx.moveTo(point.x, -point.y);
-        } else {
-            ctx.lineTo(point.x, -point.y);
-        }
-    }
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = color;
     ctx.stroke();
 
     ctx.restore();
@@ -112,10 +77,19 @@ function drawMaxRangeProjectile(): void {
 
 function draw(): void {
     drawAxes();
-    calculateTrajectory();
-    drawProjectile();
-    calculateMaxTrajectory();
-    drawMaxRangeProjectile();
+    const angle = parseFloat(angleInput.value) * Math.PI / 180;
+    const g = parseFloat(gravityInput.value);
+    const u = parseFloat(speedInput.value);
+    const h = parseFloat(heightInput.value);
+
+    curves.set('blue', { points: calculateTrajectory(angle, g, u, h) });
+
+    const maxAngle = Math.asin(1 / (Math.sqrt(2 + (2 * g * h) / (u ** 2))));
+    curves.set('red', { points: calculateTrajectory(maxAngle, g, u, h) });
+
+    curves.forEach((_, color) => drawCurve(color));
+    telemetry.innerHTML = telemetryArray.join('<br>');
+    telemetryArray = [];
 }
 
 function handleMouseDown(e: MouseEvent): void {
@@ -139,27 +113,22 @@ function handleMouseMove(e: MouseEvent): void {
     ctx.scale(scale, scale);
     ctx.fillStyle = 'black';
 
-    const pointsToCheck = [...points, ...maxRangePoints];
-    if (pointsToCheck.length > 0) {
-        const closestPoint = pointsToCheck.reduce((prev, curr) => {
-            const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
-            const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
-            return currDist < prevDist ? curr : prev;
-        });
+    curves.forEach((curve, color) => {
+        const points = curve.points;
 
-        const isPoint = points.includes(closestPoint);
-        const textColor = isPoint ? 'blue' : 'red';
-        const pointColor = isPoint ? 'blue' : 'red';
-
-        ctx.fillStyle = textColor;
-        ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
-
-        ctx.beginPath();
-        ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
-        ctx.fillStyle = pointColor;
-        ctx.fill();
-    }
-
+        if (points.length > 0) {
+            const closestPoint = points.reduce((prev, curr) => {
+                const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
+                const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
+                return currDist < prevDist ? curr : prev;
+            });
+            ctx.beginPath();
+            ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            telemetryArray.push(`<p1>${color}: (${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})<p1>`);
+        }
+    });
     ctx.restore();
 }
 
@@ -179,8 +148,8 @@ canvas.addEventListener('mousemove', handleMouseMove);
 canvas.addEventListener('mouseup', handleMouseUp);
 canvas.addEventListener('wheel', handleWheel);
 
-angleInput.addEventListener('input', draw);
 gravityInput.addEventListener('input', draw);
+angleInput.addEventListener('input', draw);
 speedInput.addEventListener('input', draw);
 heightInput.addEventListener('input', draw);
 

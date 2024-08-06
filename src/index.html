@@ -52,10 +52,15 @@
     <input type="number" id="challenge2_speed" value="50"><br>
     <label for="challenge2_height">Launch Height (h):</label>
     <input type="number" id="challenge2_height" value="0"><br>
-    <canvas id="challenge2_canvas" width="800" height="400"></canvas>
+    <canvas id="challenge2_canvas" width="800" height="400"></canvas><br>
 
     <h2>Challenge 3</h2>
-    <p1>An analyticn analytic simulation of projectile mointersection paramaters (X,Y) constraining the configuration spacersection paramaters (X,Y) constraining the configuration space</p1><br>
+    <p1>An analytic simulation of projectile motion with paramaters (X,Y) constraining the configuration space such that all trajectories conform to an intersection with (X,Y)</p1><br>
+    <ul>
+        <li>Grey: A trajectory that intersects (X,Y) with minimum initial velocity</li>
+        <li>Green: A trajectory that intersects (X,Y) with minimum initial velocity and a maximum launch angle (High ball)</li>
+        <li>Blue: A trajectory that intersects (X,Y) with minimum initial velocity and a minimum launch angle (Low ball)</li>
+    </ul>
     <label for="challenge3_gravity">Gravity (g):</label>
     <input type="number" id="challenge3_gravity" value="9.81"><br>
     <label for="challenge3_gravity">Height (h):</label>
@@ -64,10 +69,15 @@
     <input type="number" id="challenge3_fixedX" value="100"><br>
     <label for="challenge3_fixedY">Fixed Y:</label>
     <input type="number" id="challenge3_fixedY" value="100"><br>
-    <canvas id="challenge3_canvas" width="800" height="400"></canvas>
+    <canvas id="challenge3_canvas" width="800" height="400"></canvas><br>
+    <div id="challenge3_telemetry"></div><br>
 
     <h2>Challenge 4</h2>
     <p1>An analytic simulation comparing a trajectory of specified paramaters against the maximum ranged trajectory under variation w.r.t the launch angle</p1><br>
+    <ul>
+        <li>Red: A trajectory that provides maximum horizontal displacement given optimisation w.r.t launch angle</li>
+        <li>Blue: A trajectory created by provided paramaters</li>
+    </ul>
     <label for="challenge4_angle">Launch Angle (θ):</label>
     <input type="number" id="challenge4_angle" value="50"><br>
     <label for="challenge4_gravity">Gravity (g):</label>
@@ -76,10 +86,20 @@
     <input type="number" id="challenge4_speed" value="50"><br>
     <label for="challenge4_height">Launch Height (h):</label>
     <input type="number" id="challenge4_height" value="10"><br>
-    <canvas id="challenge4_canvas" width="800" height="400"></canvas>
+    <canvas id="challenge4_canvas" width="800" height="400"></canvas><br>
+    <div id="challenge4_telemetry"></div><br>
+
 
     <h2>Challenge 5</h2>
     <p1>All previous curves plotted with an additional bounding curve</p1><br>
+    <ul>
+        <li>Pink: Bounding curve</li>
+        <li>Green: High ball using minSpeed</li>
+        <li>Blue: Low ball using minSpeed</li>
+        <li>Red: Max range given minSpeed</li>
+        <li>Grey: minSpeed trajectory</li>
+        <li>All curves depend on minSpeed - the lowest possible initial velocity to reach (X,Y)</li>
+    </ul>
     <label for="challenge5_gravity">Gravity (g):</label>
     <input type="number" id="challenge5_gravity" value="9.81"><br>
     <label for="challenge5_height">Height (h):</label>
@@ -90,8 +110,8 @@
     <input type="number" id="challenge5_fixedY" value="100"><br>
     <label for="challenge5_speed">Launch Speed (u):</label>
     <input type="number" id="challenge5_speed" value="50"><br>
-    <p1 id="challenge5_telemetry"></p1>
-    <canvas id="challenge5_canvas" width="800" height="400"></canvas>
+    <canvas id="challenge5_canvas" width="800" height="400"></canvas><br>
+    <div id="challenge5_telemetry"></div><br>
 
     <script src="/static/client_1.js"></script>
     <script src="/static/client_1.5.js"></script>

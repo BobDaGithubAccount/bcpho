@@ -6,14 +6,16 @@ const gravityInput = document.getElementById('challenge3_gravity') as HTMLInputE
 const fixedXInput = document.getElementById('challenge3_fixedX') as HTMLInputElement;
 const fixedYInput = document.getElementById('challenge3_fixedY') as HTMLInputElement;
 const heightInput = document.getElementById('challenge3_height') as HTMLInputElement;
+const telemetry = document.getElementById('challenge3_telemetry') as HTMLInputElement;
+
+let telemetryArray: string[] = [];
 
 let scale = 1;
 let offsetX = 0;
 let offsetY = 0;
 let isDragging = false;
 let startX: number, startY: number;
-let lowBallPoints: { x: number, y: number }[] = [];
-let highBallPoints: { x: number, y: number }[] = [];
+const curves: Map<string, { points: { x: number, y: number }[] }> = new Map();
 
 function drawAxes(): void {
     ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
@@ -36,106 +38,82 @@ function drawAxes(): void {
     ctx.restore();
 }
 
-function calculateTrajectories(): void {
-    const g = parseFloat(gravityInput.value);
-    const X = parseFloat(fixedXInput.value);
-    const Y = parseFloat(fixedYInput.value);
-    const h = parseFloat(heightInput.value);
-
-    if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
-        console.error("Invalid input values");
-        return;
-    }
-
+function calculateTrajectory(g: number, X: number, Y: number, h: number, angle: number): { x: number, y: number }[] {
     const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
     const u2 = minSpeed * minSpeed;
-
     const A = (g / (2 * u2)) * X * X;
     const B = -X;
     const C = Y - h + (g * X * X) / (2 * u2);
-
     const discriminant = (B * B) - (4 * A * C);
 
-    if (discriminant < 0) {
-        // console.error("No real solution exists for the given input values", discriminant);
-        return;
-    }
+    if (discriminant < 0) return [];
 
     const sqrtDiscriminant = Math.sqrt(discriminant);
-    const tanTheta1 = (-B + sqrtDiscriminant) / (2 * A);
-    const tanTheta2 = (-B - sqrtDiscriminant) / (2 * A);
+    const tanTheta = angle === 1 ? (-B + sqrtDiscriminant) / (2 * A) : (-B - sqrtDiscriminant) / (2 * A);
+    const theta = Math.atan(tanTheta);
 
-    const theta1 = Math.atan(tanTheta1);
-    const theta2 = Math.atan(tanTheta2);
-
-    lowBallPoints = [];
-    highBallPoints = [];
+    const points: { x: number, y: number }[] = [];
     const timeStep = 0.01;
-
     let t = 0;
     let x = 0;
     let y = h;
-    let vx = minSpeed * Math.cos(theta1);
-    let vy = minSpeed * Math.sin(theta1);
+    let vx = minSpeed * Math.cos(theta);
+    let vy = minSpeed * Math.sin(theta);
 
     while (y >= 0) {
-        lowBallPoints.push({ x, y });
+        points.push({ x, y });
         t += timeStep;
         x += vx * timeStep;
         y += vy * timeStep - 0.5 * g * timeStep * timeStep;
         vy -= g * timeStep;
     }
 
-    t = 0;
-    x = 0;
-    y = h;
-    vx = minSpeed * Math.cos(theta2);
-    vy = minSpeed * Math.sin(theta2);
-
-    while (y >= 0) {
-        highBallPoints.push({ x, y });
-        t += timeStep;
-        x += vx * timeStep;
-        y += vy * timeStep - 0.5 * g * timeStep * timeStep;
-        vy -= g * timeStep;
-    }
+    return points;
 }
 
-function drawTrajectories(): void {
-    if (!ctx) return;
+function calculateMinTrajectory(g: number, X: number, Y: number, h: number): { x: number, y: number }[] {
+    if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+        console.error("Invalid input values");
+        return [];
+    }
+    const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
+    const u2 = minSpeed * minSpeed;
+
+    const functionPoints: { x: number, y: number }[] = [];
+    const step = 0.1;
+    for (let x = 0; 1 == 1; x += step) {
+        const y = (x * ((Y + Math.sqrt((X * X) + (Y * Y))) / X)) - (((x*x) * Math.sqrt((X*X) + (Y*Y)))/(X*X));
+        functionPoints.push({ x, y });
+        if(y < 0) break;
+    }
+    return functionPoints;
+}
+
+
+function drawCurve(color: string): void {
+    const curve = curves.get(color);
+    if (!curve) return;
+
     ctx.save();
     ctx.translate(offsetX, offsetY);
     ctx.scale(scale, scale);
 
     ctx.beginPath();
-    for (let i = 0; i < lowBallPoints.length; i++) {
-        const point = lowBallPoints[i];
+    for (let i = 0; i < curve.points.length; i++) {
+        const point = curve.points[i];
         if (i === 0) {
             ctx.moveTo(point.x, -point.y);
         } else {
             ctx.lineTo(point.x, -point.y);
         }
     }
-    ctx.strokeStyle = 'green';
-    ctx.stroke();
-
-    ctx.beginPath();
-    for (let i = 0; i < highBallPoints.length; i++) {
-        const point = highBallPoints[i];
-        if (i === 0) {
-            ctx.moveTo(point.x, -point.y);
-        } else {
-            ctx.lineTo(point.x, -point.y);
-        }
-    }
-    ctx.strokeStyle = 'blue';
+    ctx.strokeStyle = color;
     ctx.stroke();
 
     ctx.restore();
 }
 
 function drawTargetPoint(): void {
-    if (!ctx) return;
     const X = parseFloat(fixedXInput.value);
     const Y = parseFloat(fixedYInput.value);
 
@@ -157,10 +135,25 @@ function drawTargetPoint(): void {
 }
 
 function draw(): void {
-    calculateTrajectories();
+    const g = parseFloat(gravityInput.value);
+    const X = parseFloat(fixedXInput.value);
+    const Y = parseFloat(fixedYInput.value);
+    const h = parseFloat(heightInput.value);
+
+    if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+        console.error("Invalid input values");
+        return;
+    }
+
+    curves.set('green', { points: calculateTrajectory(g, X, Y, h, 1) });
+    curves.set('blue', { points: calculateTrajectory(g, X, Y, h, -1) });
+    curves.set('grey', { points: calculateMinTrajectory(g, X, Y, h) });
+
     drawAxes();
-    drawTrajectories();
+    curves.forEach((_, color) => drawCurve(color));
     drawTargetPoint();
+    telemetry.innerHTML = telemetryArray.join('<br>');
+    telemetryArray = [];
 }
 
 function handleMouseDown(e: MouseEvent): void {
@@ -184,27 +177,22 @@ function handleMouseMove(e: MouseEvent): void {
     ctx.scale(scale, scale);
     ctx.fillStyle = 'black';
 
-    const points = [...lowBallPoints, ...highBallPoints];
+    curves.forEach((curve, color) => {
+        const points = curve.points;
 
-    if (points.length > 0) {
-        const closestPoint = points.reduce((prev, curr) => {
-            const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
-            const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
-            return currDist < prevDist ? curr : prev;
-        });
-
-        const isLowBallPoint = lowBallPoints.includes(closestPoint);
-        const textColor = isLowBallPoint ? 'green' : 'blue';
-        const pointColor = isLowBallPoint ? 'green' : 'blue';
-
-        ctx.fillStyle = textColor;
-        ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
-
-        ctx.beginPath();
-        ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
-        ctx.fillStyle = pointColor;
-        ctx.fill();
-    }
+        if (points.length > 0) {
+            const closestPoint = points.reduce((prev, curr) => {
+                const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
+                const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
+                return currDist < prevDist ? curr : prev;
+            });
+            telemetryArray.push(`<p1>${color}: (${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})<p1>`);
+            ctx.beginPath();
+            ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+    });
 
     ctx.restore();
 }
