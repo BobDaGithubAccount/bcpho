@@ -29,19 +29,6 @@
     <input type="number" id="challenge1_height" value="0"><br>
     <canvas id="challenge1_canvas" width="800" height="400"></canvas>
 
-    <h2>Challenge 1.5</h2>
-    <p1>A numeric approach using lagrangians and the principle of least action UNDER MAINTENANCE - CONVERGENCE PROBLEMS</p1><br>
-    <label for="challenge1.5_angle">Launch Angle (θ):</label>
-    <input type="number" id="challenge1.5_angle" value="30"><br>
-    <label for="challenge1.5_gravity">Gravity (g):</label>
-    <input type="number" id="challenge1.5_gravity" value="9.81"><br>
-    <label for="challenge1.5_speed">Launch Speed (u):</label>
-    <input type="number" id="challenge1.5_speed" value="50"><br>
-    <label for="challenge1.5_height">Launch Height (h):</label>
-    <input type="number" id="challenge1.5_height" value="0"><br>
-    <button id="challenge1.5_startSimulation">Start Simulation</button><br>
-    <canvas id="challenge1.5_canvas" width="800" height="400"></canvas><br>
-
     <h2>Challenge 2</h2>
     <p1>An analytic approach to the dragless particle model</p1><br>
     <label for="challenge2_angle">Launch Angle (θ):</label>
@@ -113,11 +100,48 @@
     <canvas id="challenge5_canvas" width="800" height="400"></canvas><br>
     <div id="challenge5_telemetry"></div><br>
 
+    <h2>Challenge 6</h2>
+    <p1>All previous curves plotted with an additional bounding curve - AND numerical integration of arc length calculation for a notion of distance travelled</p1><br>
+    <ul>
+        <li>Pink: Bounding curve</li>
+        <li>Green: High ball using minSpeed</li>
+        <li>Blue: Low ball using minSpeed</li>
+        <li>Red: Max range given minSpeed</li>
+        <li>Grey: minSpeed trajectory</li>
+        <li>All curves depend on minSpeed - the lowest possible initial velocity to reach (X,Y)</li>
+    </ul>
+    <label for="challenge6_gravity">Gravity (g):</label>
+    <input type="number" id="challenge6_gravity" value="9.81"><br>
+    <label for="challenge6_height">Height (h):</label>
+    <input type="number" id="challenge6_height" value="10"><br>
+    <label for="challenge6_fixedX">Fixed X:</label>
+    <input type="number" id="challenge6_fixedX" value="100"><br>
+    <label for="challenge6_fixedY">Fixed Y:</label>
+    <input type="number" id="challenge6_fixedY" value="100"><br>
+    <label for="challenge6_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge6_speed" value="50"><br>
+    <canvas id="challenge6_canvas" width="800" height="400"></canvas><br>
+    <div id="challenge6_telemetry"></div><br>
+
+    <h2>Challenge Lagrangian</h2>
+    <p1>A numeric approach using lagrangians and the principle of least action UNDER MAINTENANCE - CONVERGENCE PROBLEMS</p1><br>
+    <label for="challenge_lagrangian_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge_lagrangian_angle" value="30"><br>
+    <label for="challenge_lagrangian_gravity">Gravity (g):</label>
+    <input type="number" id="challenge_lagrangian_gravity" value="9.81"><br>
+    <label for="challenge_lagrangian_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge_lagrangian_speed" value="50"><br>
+    <label for="challenge_lagrangian_height">Launch Height (h):</label>
+    <input type="number" id="challenge_lagrangian_height" value="0"><br>
+    <button id="challenge_lagrangian_startSimulation">Start Simulation</button><br>
+    <canvas id="challenge_lagrangian_canvas" width="800" height="400"></canvas><br>
+
     <script src="/bcpho/static/client_1.js"></script>
-    <script src="/bcpho/static/client_1.5.js"></script>
     <script src="/bcpho/static/client_2.js"></script>
     <script src="/bcpho/static/client_3.js"></script>
     <script src="/bcpho/static/client_4.js"></script>
     <script src="/bcpho/static/client_5.js"></script>
+    <script src="/bcpho/static/client_6.js"></script>
+    <script src="/bcpho/static/client_lagrangian.js"></script>
 </body>
 </html>
