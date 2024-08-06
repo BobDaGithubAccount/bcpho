@@ -35,8 +35,70 @@
     function calculateTrajectories() {
         calculateTrajectoriesLowHigh();
         calculateBoundingTrajectory();
+        calculateMaxTrajectory();
+        calculateMinTrajectory();
+    }
+    function calculateMaxTrajectory() {
+        const g = parseFloat(gravityInput.value);
+        const X = parseFloat(fixedXInput.value);
+        const Y = parseFloat(fixedYInput.value);
+        const h = parseFloat(heightInput.value);
+        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+            console.error("Invalid input values");
+            return;
+        }
+        const u = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
+        const angle = Math.asin(1 / (Math.sqrt(2 + (2 * g * h) / (Math.pow(u, 2)))));
+        const R = (u * Math.cos(angle) / g) * (u * Math.sin(angle) + Math.sqrt(Math.pow((u * Math.sin(angle)), 2) + 2 * g * h));
+        const step = R / 100;
+        const points = [];
+        for (let x = 0; x <= R; x += step) {
+            const t = x / (u * Math.cos(angle));
+            const y = h + x * Math.tan(angle) - (g / (2 * Math.pow(u, 2) * Math.pow(Math.cos(angle), 2))) * Math.pow(x, 2);
+            points.push({ x, y });
+        }
+        curves.set('red', { points });
     }
     function calculateBoundingTrajectory() {
+        const g = parseFloat(gravityInput.value);
+        const X = parseFloat(fixedXInput.value);
+        const Y = parseFloat(fixedYInput.value);
+        const h = parseFloat(heightInput.value);
+        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+            console.error("Invalid input values");
+            return;
+        }
+        const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
+        const u2 = minSpeed * minSpeed;
+        const functionPoints = [];
+        const step = 0.1;
+        for (let x = 0; 1 == 1; x += step) {
+            const y = ((u2 / (2 * g)) - (g * x * x) / (2 * u2)) + h;
+            functionPoints.push({ x, y });
+            if (y < 0)
+                break;
+        }
+        curves.set('pink', { points: functionPoints });
+    }
+    function calculateMinTrajectory() {
+        const g = parseFloat(gravityInput.value);
+        const X = parseFloat(fixedXInput.value);
+        const Y = parseFloat(fixedYInput.value);
+        const h = parseFloat(heightInput.value);
+        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+            console.error("Invalid input values");
+            return;
+        }
+        const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
+        const functionPoints = [];
+        const step = 0.1;
+        for (let x = 0; 1 == 1; x += step) {
+            const y = (x * ((Y + Math.sqrt((X * X) + (Y * Y))) / X)) - (((x * x) * Math.sqrt((X * X) + (Y * Y))) / (X * X));
+            functionPoints.push({ x, y });
+            if (y < 0)
+                break;
+        }
+        curves.set('grey', { points: functionPoints });
     }
     function calculateTrajectoriesLowHigh() {
         const g = parseFloat(gravityInput.value);
@@ -133,12 +195,12 @@
         ctx.restore();
     }
     function draw() {
-        telemetryArray = [];
         calculateTrajectories();
         drawAxes();
         curves.forEach((_, color) => drawCurve(color));
         drawTargetPoint();
         telemetry.innerHTML = telemetryArray.join('<br>');
+        telemetryArray = [];
     }
     function handleMouseDown(e) {
         isDragging = true;
@@ -167,12 +229,11 @@
                     const currDist = Math.sqrt(Math.pow((curr.x - x), 2) + Math.pow((curr.y - y), 2));
                     return currDist < prevDist ? curr : prev;
                 });
-                ctx.fillStyle = color;
-                ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
                 ctx.beginPath();
                 ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
                 ctx.fillStyle = color;
                 ctx.fill();
+                telemetryArray.push(`<p1>${color}: (${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})<p1>`);
             }
         });
         ctx.restore();

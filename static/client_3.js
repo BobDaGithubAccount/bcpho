@@ -7,13 +7,14 @@
     const fixedXInput = document.getElementById('challenge3_fixedX');
     const fixedYInput = document.getElementById('challenge3_fixedY');
     const heightInput = document.getElementById('challenge3_height');
+    const telemetry = document.getElementById('challenge3_telemetry');
+    let telemetryArray = [];
     let scale = 1;
     let offsetX = 0;
     let offsetY = 0;
     let isDragging = false;
     let startX, startY;
-    let lowBallPoints = [];
-    let highBallPoints = [];
+    const curves = new Map();
     function drawAxes() {
         ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
         ctx.save();
@@ -31,67 +32,61 @@
         ctx.stroke();
         ctx.restore();
     }
-    function calculateTrajectories() {
-        const g = parseFloat(gravityInput.value);
-        const X = parseFloat(fixedXInput.value);
-        const Y = parseFloat(fixedYInput.value);
-        const h = parseFloat(heightInput.value);
-        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
-            console.error("Invalid input values");
-            return;
-        }
+    function calculateTrajectory(g, X, Y, h, angle) {
         const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
         const u2 = minSpeed * minSpeed;
         const A = (g / (2 * u2)) * X * X;
         const B = -X;
         const C = Y - h + (g * X * X) / (2 * u2);
         const discriminant = (B * B) - (4 * A * C);
-        if (discriminant < 0) {
-            // console.error("No real solution exists for the given input values", discriminant);
-            return;
-        }
+        if (discriminant < 0)
+            return [];
         const sqrtDiscriminant = Math.sqrt(discriminant);
-        const tanTheta1 = (-B + sqrtDiscriminant) / (2 * A);
-        const tanTheta2 = (-B - sqrtDiscriminant) / (2 * A);
-        const theta1 = Math.atan(tanTheta1);
-        const theta2 = Math.atan(tanTheta2);
-        lowBallPoints = [];
-        highBallPoints = [];
+        const tanTheta = angle === 1 ? (-B + sqrtDiscriminant) / (2 * A) : (-B - sqrtDiscriminant) / (2 * A);
+        const theta = Math.atan(tanTheta);
+        const points = [];
         const timeStep = 0.01;
         let t = 0;
         let x = 0;
         let y = h;
-        let vx = minSpeed * Math.cos(theta1);
-        let vy = minSpeed * Math.sin(theta1);
+        let vx = minSpeed * Math.cos(theta);
+        let vy = minSpeed * Math.sin(theta);
         while (y >= 0) {
-            lowBallPoints.push({ x, y });
+            points.push({ x, y });
             t += timeStep;
             x += vx * timeStep;
             y += vy * timeStep - 0.5 * g * timeStep * timeStep;
             vy -= g * timeStep;
         }
-        t = 0;
-        x = 0;
-        y = h;
-        vx = minSpeed * Math.cos(theta2);
-        vy = minSpeed * Math.sin(theta2);
-        while (y >= 0) {
-            highBallPoints.push({ x, y });
-            t += timeStep;
-            x += vx * timeStep;
-            y += vy * timeStep - 0.5 * g * timeStep * timeStep;
-            vy -= g * timeStep;
-        }
+        return points;
     }
-    function drawTrajectories() {
-        if (!ctx)
+    function calculateMinTrajectory(g, X, Y, h) {
+        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+            console.error("Invalid input values");
+            return [];
+        }
+        const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
+        const u2 = minSpeed * minSpeed;
+        const functionPoints = [];
+        const step = 0.1;
+        for (let x = 0; 1 == 1; x += step) {
+            const y = (x * ((Y + Math.sqrt((X * X) + (Y * Y))) / X)) - (((x * x) * Math.sqrt((X * X) + (Y * Y))) / (X * X));
+            functionPoints.push({ x, y });
+            if (y < 0)
+                break;
+        }
+        return functionPoints;
+    }
+    function drawCurve(color) {
+        const curve = curves.get(color);
+        if (!curve)
             return;
         ctx.save();
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
         ctx.beginPath();
-        for (let i = 0; i < lowBallPoints.length; i++) {
-            const point = lowBallPoints[i];
+        for (let i = 0; i < curve.points.length; i++) {
+            const point = curve.points[i];
             if (i === 0) {
                 ctx.moveTo(point.x, -point.y);
             }
@@ -99,25 +94,11 @@
                 ctx.lineTo(point.x, -point.y);
             }
         }
-        ctx.strokeStyle = 'green';
-        ctx.stroke();
-        ctx.beginPath();
-        for (let i = 0; i < highBallPoints.length; i++) {
-            const point = highBallPoints[i];
-            if (i === 0) {
-                ctx.moveTo(point.x, -point.y);
-            }
-            else {
-                ctx.lineTo(point.x, -point.y);
-            }
-        }
-        ctx.strokeStyle = 'blue';
+        ctx.strokeStyle = color;
         ctx.stroke();
         ctx.restore();
     }
     function drawTargetPoint() {
-        if (!ctx)
-            return;
         const X = parseFloat(fixedXInput.value);
         const Y = parseFloat(fixedYInput.value);
         if (isNaN(X) || isNaN(Y)) {
@@ -134,10 +115,22 @@
         ctx.restore();
     }
     function draw() {
-        calculateTrajectories();
+        const g = parseFloat(gravityInput.value);
+        const X = parseFloat(fixedXInput.value);
+        const Y = parseFloat(fixedYInput.value);
+        const h = parseFloat(heightInput.value);
+        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
+            console.error("Invalid input values");
+            return;
+        }
+        curves.set('green', { points: calculateTrajectory(g, X, Y, h, 1) });
+        curves.set('blue', { points: calculateTrajectory(g, X, Y, h, -1) });
+        curves.set('grey', { points: calculateMinTrajectory(g, X, Y, h) });
         drawAxes();
-        drawTrajectories();
+        curves.forEach((_, color) => drawCurve(color));
         drawTargetPoint();
+        telemetry.innerHTML = telemetryArray.join('<br>');
+        telemetryArray = [];
     }
     function handleMouseDown(e) {
         isDragging = true;
@@ -158,23 +151,21 @@
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
         ctx.fillStyle = 'black';
-        const points = [...lowBallPoints, ...highBallPoints];
-        if (points.length > 0) {
-            const closestPoint = points.reduce((prev, curr) => {
-                const prevDist = Math.sqrt(Math.pow((prev.x - x), 2) + Math.pow((prev.y - y), 2));
-                const currDist = Math.sqrt(Math.pow((curr.x - x), 2) + Math.pow((curr.y - y), 2));
-                return currDist < prevDist ? curr : prev;
-            });
-            const isLowBallPoint = lowBallPoints.includes(closestPoint);
-            const textColor = isLowBallPoint ? 'green' : 'blue';
-            const pointColor = isLowBallPoint ? 'green' : 'blue';
-            ctx.fillStyle = textColor;
-            ctx.fillText(`(${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})`, x, -y);
-            ctx.beginPath();
-            ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
-            ctx.fillStyle = pointColor;
-            ctx.fill();
-        }
+        curves.forEach((curve, color) => {
+            const points = curve.points;
+            if (points.length > 0) {
+                const closestPoint = points.reduce((prev, curr) => {
+                    const prevDist = Math.sqrt(Math.pow((prev.x - x), 2) + Math.pow((prev.y - y), 2));
+                    const currDist = Math.sqrt(Math.pow((curr.x - x), 2) + Math.pow((curr.y - y), 2));
+                    return currDist < prevDist ? curr : prev;
+                });
+                telemetryArray.push(`<p1>${color}: (${Math.round(closestPoint.x * 1000) / 1000}, ${Math.round(closestPoint.y * 1000) / 1000})<p1>`);
+                ctx.beginPath();
+                ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+        });
         ctx.restore();
     }
     function handleMouseUp() {
