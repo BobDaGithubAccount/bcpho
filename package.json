@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "wasm": "bash src/compile_fluidSimulator.sh",
     "clean": "rimraf dist",
     "build": "npm run clean && tsc && npm run copy-files",
     "copy-files": "cpx './src/**/*' './dist/src'",
