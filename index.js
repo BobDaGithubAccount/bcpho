@@ -1,43 +1,41 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { spawn } from 'child_process';
-const srcPath = './src';
-let serverProcess = null;
-function startServer() {
-    if (serverProcess) {
-        serverProcess.kill();
-    }
-    serverProcess = spawn('npm', ['run', 'start'], {
-        stdio: 'inherit',
-        shell: true
-    });
-    serverProcess.on('close', (code) => {
-        if (code !== null) {
-            console.log(`Server process exited with code ${code}`);
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+
+const app = express();
+
+const distPath = path.join(__dirname, 'dist');
+
+function registerEndpoints(dirPath, basePath = '') {
+    const files = fs.readdirSync(dirPath);
+
+    files.forEach((file) => {
+        let filePath = path.join(dirPath, file);
+        let relativePath = path.join(basePath, file);
+
+        if (fs.statSync(filePath).isDirectory()) {
+            registerEndpoints(filePath, relativePath);
+        } else {
+            let endpoint = path.join('/dist', relativePath);
+            relativePath = relativePath.replace(/\\/g, '/');
+            relativePath = path.join('/', relativePath);
+            console.log(`Registering endpoint: ${endpoint} and relative path ${relativePath} for file ${filePath}`);
+            app.get(endpoint, (req, res) => {
+                res.sendFile(filePath);
+            });
+            app.get(relativePath, (req, res) => {
+                res.sendFile(filePath);
+            });
         }
     });
 }
-startServer();
-fs.watch(srcPath, (eventType, filename) => {
-    if (filename === null) {
-        console.error('Filename is null');
-        return;
-    }
-    console.log(`File ${filename} has changed`);
-    const fileExtension = path.extname(filename);
-    if (fileExtension === '.ts') {
-        console.log('Restarting server due to TypeScript file change');
-        startServer();
-    }
-    else {
-        console.log('Running npm run copy-files...');
-        spawn('npm', ['run', 'copy-files'], {
-            stdio: 'inherit',
-            shell: true
-        }).on('close', (code) => {
-            if (code !== null) {
-                console.log(`copy-files process exited with code ${code}`);
-            }
-        });
-    }
+
+registerEndpoints(distPath);
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
+
+app.listen(8000, () => {
+    console.log('Server is running on port 8000');
 });

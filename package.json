@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "wasm": "bash src/compile_fluidSimulator.sh",
-    "build": "tsc",
-    "worker": "node pages_worker.js"
+    "build": "rm -r dist && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
+    "run": "node index.js",
+    "start": "npm run build && npm run run",
+    "worker": ""
   },
   "keywords": [],
   "author": "Stanley Howard",
@@ -14,6 +16,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "mathjs": "^13.0.3",
+    "path-browserify": "^1.0.1",
     "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },

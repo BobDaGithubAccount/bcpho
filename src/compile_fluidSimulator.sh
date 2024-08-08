@@ -1,1 +1,1 @@
-emcc src/fluid_simulator.cpp -o src/fluid_simulator.js --bind
+emcc src/fluid_simulator.cpp -o src/fluid_simulator.js -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME="createModule" --bind

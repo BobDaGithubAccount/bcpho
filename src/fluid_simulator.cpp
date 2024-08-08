@@ -38,11 +38,12 @@ private:
     Vector2D fluidVelocity;
 };
 
-// Binding code for wasm
 EMSCRIPTEN_BINDINGS(fluid_simulator_module) {
     emscripten::value_object<Vector2D>("Vector2D")
         .field("x", &Vector2D::x)
         .field("y", &Vector2D::y);
+
+    emscripten::register_vector<Vector2D>("vector<Vector2D>");
 
     emscripten::class_<FluidSimulator>("FluidSimulator")
         .constructor<double, Vector2D>()
