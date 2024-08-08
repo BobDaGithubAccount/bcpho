@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./",
+    "sourceMap": true,
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "target": "es6"
   },
-  "include": ["server.ts", "src/**/*.ts", "index.ts"],
-  "exclude": ["dist"]
+  "include": ["src/**/*"]
 }

@@ -1,5 +1,4 @@
 // fluid_simulator.d.ts
-
 interface Vector2D {
     x: number;
     y: number;
@@ -17,7 +16,7 @@ interface FluidSimulator {
     ): Vector2D[];
 }
 
-declare const createModule: () => Promise<{
+declare function createModule(): Promise<{
     FluidSimulator: {
         prototype: FluidSimulator;
         new (density: number, fluidVelocity: Vector2D): FluidSimulator;

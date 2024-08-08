@@ -1,13 +1,17 @@
+// client_8.ts
 (async function() {
-    let wasmModule: any;
+    let FluidSimulator: any;
 
     async function initWasm() {
-        const moduleFactory = await import('./fluid_simulator');
-        wasmModule = await moduleFactory.default(); // Initialize the module
+        // Import the module
+        const createModule = (await import('./fluid_simulator.js')).default;
+        // Initialize the module
+        const wasmModule = await createModule();
+        FluidSimulator = wasmModule.FluidSimulator;
     }
 
     async function calculateTrajectoriesWithWasm() {
-        if (!wasmModule) {
+        if (!FluidSimulator) {
             await initWasm();
         }
 
@@ -19,13 +23,13 @@
         const speed = parseFloat((document.getElementById('challenge8_speed') as HTMLInputElement).value);
         const height = parseFloat((document.getElementById('challenge8_height') as HTMLInputElement).value);
 
-        const fluidSimulator = new wasmModule.FluidSimulator(density, { x: fluidVelocityX, y: fluidVelocityY });
+        const fluidSimulator = new FluidSimulator(density, { x: fluidVelocityX, y: fluidVelocityY });
         const points = fluidSimulator.calculateTrajectory(angle, gravity, speed, height, 0.01, 1000);
 
         drawTrajectory(points);
     }
 
-    function drawTrajectory(points: { x: number, y: number }[]): void {
+    function drawTrajectory(points: { x: number, y: number }[]) {
         const canvas = document.getElementById('challenge8_canvas') as HTMLCanvasElement;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
