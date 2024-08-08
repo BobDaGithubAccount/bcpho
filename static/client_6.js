@@ -232,9 +232,9 @@
             const points = curve.points;
             if (points.length > 0) {
                 const closestPoint = points.reduce((prev, curr) => {
-                    const prevDist = Math.sqrt(Math.pow((prev.x - x), 2) + Math.pow((prev.y - y), 2));
-                    const currDist = Math.sqrt(Math.pow((curr.x - x), 2) + Math.pow((curr.y - y), 2));
-                    return currDist < prevDist ? curr : prev;
+                    const prevDistance = Math.abs(prev.x - x);
+                    const currDistance = Math.abs(curr.x - x);
+                    return currDistance < prevDistance ? curr : prev;
                 });
                 ctx.beginPath();
                 ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);

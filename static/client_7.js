@@ -1,19 +1,24 @@
 "use strict";
 (function () {
-    const canvas = document.getElementById('challenge3_canvas');
+    const canvas = document.getElementById('challenge7_canvas');
     const ctx = canvas.getContext('2d');
     ctx.translate(canvas.width / 2, canvas.height / 2);
-    const gravityInput = document.getElementById('challenge3_gravity');
-    const fixedXInput = document.getElementById('challenge3_fixedX');
-    const fixedYInput = document.getElementById('challenge3_fixedY');
-    const heightInput = document.getElementById('challenge3_height');
-    const telemetry = document.getElementById('challenge3_telemetry');
-    let telemetryArray = [];
+    const gravityInput = document.getElementById('challenge7_gravity');
+    const heightInput = document.getElementById('challenge7_height');
+    const speedInput = document.getElementById('challenge7_speed');
+    const modeInput = document.getElementById('challenge7_mode');
+    const sfInputX = document.getElementById('challenge7_sfx');
+    const sfInputY = document.getElementById('challenge7_sfy');
+    const telemetry = document.getElementById('challenge7_telemetry');
     let scale = 1;
     let offsetX = 0;
     let offsetY = 0;
     let isDragging = false;
     let startX, startY;
+    let telemetryArray = [];
+    let mode = 0;
+    let sfx = 1;
+    let sfy = 1;
     const curves = new Map();
     function drawAxes() {
         ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
@@ -32,103 +37,94 @@
         ctx.stroke();
         ctx.restore();
     }
-    function calculateTrajectory(g, X, Y, h, angle) {
-        const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
-        const u2 = minSpeed * minSpeed;
-        const A = (g / (2 * u2)) * X * X;
-        const B = -X;
-        const C = Y - h + (g * X * X) / (2 * u2);
-        const discriminant = (B * B) - (4 * A * C);
-        if (discriminant < 0)
-            return [];
-        const sqrtDiscriminant = Math.sqrt(discriminant);
-        const tanTheta = angle === 1 ? (-B + sqrtDiscriminant) / (2 * A) : (-B - sqrtDiscriminant) / (2 * A);
-        const theta = Math.atan(tanTheta);
-        const points = [];
-        const timeStep = 0.01;
-        let t = 0;
-        let x = 0;
-        let y = h;
-        let vx = minSpeed * Math.cos(theta);
-        let vy = minSpeed * Math.sin(theta);
-        while (y >= 0) {
-            points.push({ x, y });
-            t += timeStep;
-            x += vx * timeStep;
-            y += vy * timeStep - 0.5 * g * timeStep * timeStep;
-            vy -= g * timeStep;
-        }
-        return points;
+    function calculateTrajectories() {
+        let g = parseFloat(gravityInput.value);
+        let h = parseFloat(heightInput.value);
+        let u = parseFloat(speedInput.value);
+        let colourArray = new Map();
+        colourArray.set('blue', 30);
+        colourArray.set('green', 45);
+        colourArray.set('red', 60);
+        colourArray.set('cyan', 70.5);
+        colourArray.set('magenta', 78);
+        colourArray.set('yellow', 85);
+        colourArray.set('black', 15);
+        colourArray.set('white', 0);
+        colourArray.forEach((angle, colour) => {
+            curves.set(colour, { points: calculateTrajectory(angle, g, u, h) });
+        });
     }
-    function calculateMinTrajectory(g, X, Y, h) {
-        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
-            console.error("Invalid input values");
+    function calculateTrajectory(rawAngle, g, u, h) {
+        if (mode === 1) {
+            const angle = (rawAngle * Math.PI) / 180;
+            const R = (u * Math.cos(angle) / g) * (u * Math.sin(angle) + Math.sqrt(Math.pow((u * Math.sin(angle)), 2) + 2 * g * h));
+            const step = R / 100; // 100 steps for the trajectory
+            let points = [];
+            for (let x = 0; x <= R; x += step) {
+                const t = x / (u * Math.cos(angle));
+                const y = h + x * Math.tan(angle) - (g / (2 * Math.pow(u, 2) * Math.pow(Math.cos(angle), 2))) * Math.pow(x, 2);
+                points.push({ x, y });
+            }
+            return points;
+        }
+        else if (mode === 0) {
+            const angle = (rawAngle * Math.PI) / 180;
+            let totalTime = (2 * u * Math.sin(angle)) / g;
+            let timeSteps = 100;
+            let timeStep = (totalTime / timeSteps);
+            let time = 0;
+            let timePoints = [];
+            for (let t = 0; t < timeSteps * sfx; t += 1) {
+                let x = time * sfx;
+                let y = Math.sqrt((u * u * t * t) - (g * t * t * t * u * Math.sin(angle)) + (0.25 * g * g * t * t * t * t));
+                if (y > 500) {
+                    break;
+                }
+                y = y / sfy;
+                timePoints.push({ x, y });
+                time = time + timeStep;
+            }
+            return timePoints;
+        }
+        else {
             return [];
         }
-        const minSpeed = Math.sqrt(g * (Y + Math.sqrt((X * X) + (Y * Y))));
-        const u2 = minSpeed * minSpeed;
-        const functionPoints = [];
-        const step = 0.1;
-        for (let x = 0; 1 == 1; x += step) {
-            const y = (x * ((Y + Math.sqrt((X * X) + (Y * Y))) / X)) - (((x * x) * Math.sqrt((X * X) + (Y * Y))) / (X * X));
-            functionPoints.push({ x, y });
-            if (y < 0)
-                break;
-        }
-        return functionPoints;
     }
     function drawCurve(color) {
         const curve = curves.get(color);
-        if (!curve)
+        if (!curve || !ctx)
             return;
         ctx.save();
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
         ctx.beginPath();
+        let arcLength = 0;
+        //Numerical integration of arc length
         for (let i = 0; i < curve.points.length; i++) {
             const point = curve.points[i];
             if (i === 0) {
                 ctx.moveTo(point.x, -point.y);
             }
             else {
+                const prevPoint = curve.points[i - 1];
+                const dx = point.x - prevPoint.x;
+                const dy = point.y - prevPoint.y;
+                arcLength += Math.sqrt(dx * dx + dy * dy);
                 ctx.lineTo(point.x, -point.y);
             }
         }
         ctx.strokeStyle = color;
         ctx.stroke();
         ctx.restore();
-    }
-    function drawTargetPoint() {
-        const X = parseFloat(fixedXInput.value);
-        const Y = parseFloat(fixedYInput.value);
-        if (isNaN(X) || isNaN(Y)) {
-            console.error("Invalid input values");
-            return;
-        }
-        ctx.save();
-        ctx.translate(offsetX, offsetY);
-        ctx.scale(scale, scale);
-        ctx.beginPath();
-        ctx.arc(X, -Y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-        ctx.restore();
+        telemetryArray.push(`<p1>${color} Arc Length: ${Math.round(arcLength * 1000) / 1000}<p1>`);
     }
     function draw() {
-        const g = parseFloat(gravityInput.value);
-        const X = parseFloat(fixedXInput.value);
-        const Y = parseFloat(fixedYInput.value);
-        const h = parseFloat(heightInput.value);
-        if (isNaN(g) || isNaN(X) || isNaN(Y) || isNaN(h) || X <= 0 || g <= 0) {
-            console.error("Invalid input values");
-            return;
-        }
-        curves.set('green', { points: calculateTrajectory(g, X, Y, h, 1) });
-        curves.set('blue', { points: calculateTrajectory(g, X, Y, h, -1) });
-        curves.set('grey', { points: calculateMinTrajectory(g, X, Y, h) });
+        mode = parseInt(modeInput.value, 10);
+        sfx = parseInt(sfInputX.value);
+        sfy = parseInt(sfInputY.value);
+        calculateTrajectories();
         drawAxes();
         curves.forEach((_, color) => drawCurve(color));
-        drawTargetPoint();
         telemetry.innerHTML = telemetryArray.join('<br>');
         telemetryArray = [];
     }
@@ -178,9 +174,11 @@
         draw();
     }
     gravityInput.addEventListener('input', draw);
-    fixedXInput.addEventListener('input', draw);
-    fixedYInput.addEventListener('input', draw);
     heightInput.addEventListener('input', draw);
+    speedInput.addEventListener('input', draw);
+    modeInput.addEventListener('input', draw);
+    sfInputX.addEventListener('input', draw);
+    sfInputY.addEventListener('input', draw);
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);

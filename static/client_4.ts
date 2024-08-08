@@ -118,9 +118,9 @@ function handleMouseMove(e: MouseEvent): void {
 
         if (points.length > 0) {
             const closestPoint = points.reduce((prev, curr) => {
-                const prevDist = Math.sqrt((prev.x - x) ** 2 + (prev.y - y) ** 2);
-                const currDist = Math.sqrt((curr.x - x) ** 2 + (curr.y - y) ** 2);
-                return currDist < prevDist ? curr : prev;
+                const prevDistance = Math.abs(prev.x - x);
+                const currDistance = Math.abs(curr.x - x);
+                return currDistance < prevDistance ? curr : prev;
             });
             ctx.beginPath();
             ctx.arc(closestPoint.x, -closestPoint.y, 2, 0, 2 * Math.PI);
