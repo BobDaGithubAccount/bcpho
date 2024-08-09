@@ -155,12 +155,24 @@
     <input type="number" id="challenge8_height" value="0"><br>
     <label for="challenge8_density">Fluid Density:</label>
     <input type="number" id="challenge8_density" value="1"><br>
-    <label for="challenge8_velocity_x">Fluid Velocity (x-component):</label>
-    <input type="number" id="challenge8_velocity_x" value="0"><br>
-    <label for="challenge8_velocity_y">Fluid Velocity (y-component):</label>
-    <input type="number" id="challenge8_velocity_y" value="0"><br>
-    <button id="challenge8_calculate">Calculate</button><br>
-    <canvas id="challenge8_canvas" width="800" height="400"></canvas><br>
+    <label for="challenge8_viscosity">Fluid Viscosity:</label>
+    <input type="number" id="challenge8_viscosity" value="0.5"><br>
+    <label for="challenge8_force_x">Force Application X:</label>
+    <input type="number" id="challenge8_force_x" value="50"><br>
+    <label for="challenge8_force_y">Force Application Y:</label>
+    <input type="number" id="challenge8_force_y" value="50"><br>
+    <label for="challenge8_force_magnitude_x">Force Magnitude X:</label>
+    <input type="number" id="challenge8_force_magnitude_x" value="10"><br>
+    <label for="challenge8_force_magnitude_y">Force Magnitude Y:</label>
+    <input type="number" id="challenge8_force_magnitude_y" value="10"><br>
+    <label for="challenge8_telemetry">Telemetry:</label>
+    <select id="challenge8_telemetry">
+        <option value="false">False</option>
+        <option value="true">True</option>
+    </select><br>
+    <button id="challenge8_run_simulation">Run simulation</button><br>
+    <button id="challenge8_stop_simulation">Stop simulation</button><br>
+    <canvas id="challenge8_canvas" width="1000" height="1000"></canvas><br>
 
     <h2>Challenge Lagrangian</h2>
     <p1>A numeric approach using lagrangians and the principle of least action UNDER MAINTENANCE - CONVERGENCE PROBLEMS</p1><br>

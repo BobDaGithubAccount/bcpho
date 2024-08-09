@@ -1,55 +1,98 @@
-(async function() {
-    let FluidSimulator: any;
+import init, { FluidSimulator, Vector2D } from './fluid_simulator.js';
 
-    async function initWasm() {
-        const module = await import('./fluid_simulator.js');
-        const createModule = module.default || module;  // Handle both cases
-        const wasmModule = await createModule();
-        FluidSimulator = wasmModule.FluidSimulator;
+let animationFrameId: number | null = null;
+let isRunning: boolean = false;
+
+async function startSimulation() {
+    await init();
+
+    const density = parseFloat((document.getElementById('challenge8_density') as HTMLInputElement).value);
+    const width = 100;
+    const height = 100;
+    const timeStep = 0.1;
+    const viscosity = parseFloat((document.getElementById('challenge8_viscosity') as HTMLInputElement).value);
+
+    const fluidSimulator = new FluidSimulator(width, height, timeStep, viscosity, density);
+
+    addInitialForce(fluidSimulator);
+
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
     }
+    isRunning = true;
+    animate(fluidSimulator);
+}
 
-    async function calculateTrajectoriesWithWasm() {
-        if (!FluidSimulator) {
-            await initWasm();
+function addInitialForce(fluidSimulator: FluidSimulator) {
+    const forceX = parseFloat((document.getElementById('challenge8_force_x') as HTMLInputElement).value);
+    const forceY = parseFloat((document.getElementById('challenge8_force_y') as HTMLInputElement).value);
+    const forceMagnitudeX = parseFloat((document.getElementById('challenge8_force_magnitude_x') as HTMLInputElement).value);
+    const forceMagnitudeY = parseFloat((document.getElementById('challenge8_force_magnitude_y') as HTMLInputElement).value);
+
+    fluidSimulator.add_force(forceX, forceY, forceMagnitudeX, forceMagnitudeY);
+}
+
+function animate(fluidSimulator: FluidSimulator) {
+    if (!isRunning) {
+        return;
+    }
+    fluidSimulator.step();
+    drawVectorField(fluidSimulator);
+    animationFrameId = requestAnimationFrame(() => animate(fluidSimulator));
+}
+
+function drawVectorField(fluidSimulator: FluidSimulator) {
+    const canvas = document.getElementById('challenge8_canvas') as HTMLCanvasElement;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const simWidth = 100;
+    const simHeight = 100;
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const cellSize = canvasWidth / simWidth;
+
+    const velocityFieldX = fluidSimulator.get_velocity_field_x();
+    const velocityFieldY = fluidSimulator.get_velocity_field_y();
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 1;
+
+    for (let y = 0; y < simHeight; y++) {
+        for (let x = 0; x < simWidth; x++) {
+            const index = y * simWidth + x;
+
+            const vx = velocityFieldX[index];
+            const vy = velocityFieldY[index];
+
+            const startX = x * cellSize;
+            const startY = y * cellSize;
+            const endX = startX + vx * cellSize;
+            const endY = startY + vy * cellSize;
+
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+
+            const angle = Math.atan2(vy, vx);
+            const arrowLength = 5;
+            ctx.beginPath();
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle - Math.PI / 6), endY - arrowLength * Math.sin(angle - Math.PI / 6));
+            ctx.moveTo(endX, endY);
+            ctx.lineTo(endX - arrowLength * Math.cos(angle + Math.PI / 6), endY - arrowLength * Math.sin(angle + Math.PI / 6));
+            ctx.stroke();
         }
-
-        const density = parseFloat((document.getElementById('challenge8_density') as HTMLInputElement).value);
-        const fluidVelocityX = parseFloat((document.getElementById('challenge8_velocity_x') as HTMLInputElement).value);
-        const fluidVelocityY = parseFloat((document.getElementById('challenge8_velocity_y') as HTMLInputElement).value);
-        const angle = parseFloat((document.getElementById('challenge8_angle') as HTMLInputElement).value);
-        const gravity = parseFloat((document.getElementById('challenge8_gravity') as HTMLInputElement).value);
-        const speed = parseFloat((document.getElementById('challenge8_speed') as HTMLInputElement).value);
-        const height = parseFloat((document.getElementById('challenge8_height') as HTMLInputElement).value);
-    
-        const fluidSimulator = new FluidSimulator(density, { x: fluidVelocityX, y: fluidVelocityY });
-        
-        const points = fluidSimulator.calculateTrajectory(angle, gravity, speed, height, 0.01, 1000);
-        const pointsArray = [];
-        for (let i = 0; i < points.size(); i++) {
-            pointsArray.push(points.get(i));
-        }
-        
-        console.log(pointsArray);
-        drawTrajectory(pointsArray);
     }
+}
 
-    function drawTrajectory(points: { x: number, y: number }[]) {
-        const canvas = document.getElementById('challenge8_canvas') as HTMLCanvasElement;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        points.forEach((point, index) => {
-            if (index === 0) {
-                ctx.moveTo(point.x, canvas.height - point.y);
-            } else {
-                ctx.lineTo(point.x, canvas.height - point.y);
-            }
-        });
-        ctx.strokeStyle = 'blue';
-        ctx.stroke();
+document.getElementById('challenge8_run_simulation')?.addEventListener('click', startSimulation);
+document.getElementById('challenge8_stop_simulation')?.addEventListener('click', () => {
+    isRunning = false;
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
     }
-
-    document.getElementById('challenge8_calculate')?.addEventListener('click', calculateTrajectoriesWithWasm);
-})();
+});

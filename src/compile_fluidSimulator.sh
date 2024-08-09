@@ -1,1 +1,5 @@
-emcc src/fluid_simulator.cpp -o src/fluid_simulator.js -s WASM=1 -s MODULARIZE=1 -s EXPORT_NAME="createModule" --bind
+cd fluid_simulator
+pwd
+rm -r pkg
+wasm-pack build --target web
+cp -r pkg/* ../src/

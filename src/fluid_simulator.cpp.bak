@@ -1,0 +1,211 @@
+#include <emscripten.h>
+#include <emscripten/bind.h>
+#include <vector>
+#include <cmath>
+#include <algorithm>
+#include <iostream>
+#include <memory>
+
+struct Vector2D {
+    double x, y;
+};
+
+class FluidSimulator {
+public:
+    FluidSimulator(int width, int height, double timeStep, double viscosity, double density)
+        : width(width), height(height), timeStep(timeStep), viscosity(viscosity), density(density),
+          velocityX(width * height, 0.0), velocityY(width * height, 0.0), pressure(width * height, 0.0) {}
+
+    void step() {
+        adjustTimeStep();  // Adjust the timestep based on CFL condition
+        diffuse();
+        project();
+        advect();
+        project();
+        applyBoundaryConditions();
+    }
+
+    void addForce(int x, int y, Vector2D force) {
+        int index = y * width + x;
+        velocityX[index] += force.x * timeStep;
+        velocityY[index] += force.y * timeStep;
+    }
+
+    Vector2D getVelocity(int x, int y) const {
+        int index = y * width + x;
+        return {velocityX[index], velocityY[index]};
+    }
+
+    const std::vector<double>& getVelocityFieldX() const {
+        return velocityX;
+    }
+
+    const std::vector<double>& getVelocityFieldY() const {
+        return velocityY;
+    }
+
+    void outputTelemetry() const {
+        std::string telemetry = formatTelemetry();
+        std::cout << telemetry << std::endl;
+    }
+
+private:
+    int width, height;
+    double timeStep, viscosity, density;
+    std::vector<double> velocityX, velocityY, pressure;
+
+    std::string formatTelemetry() const {
+        std::string telemetry;
+        telemetry += "{";
+        telemetry += "\"width\": " + std::to_string(width) + ", ";
+        telemetry += "\"height\": " + std::to_string(height) + ", ";
+        telemetry += "\"timeStep\": " + std::to_string(timeStep) + ", ";
+        telemetry += "\"viscosity\": " + std::to_string(viscosity) + ", ";
+        telemetry += "\"density\": " + std::to_string(density) + ", ";
+        telemetry += "\"MaxVelocityX\": " + std::to_string(*std::max_element(velocityX.begin(), velocityX.end())) + ", ";
+        telemetry += "\"MinVelocityY\": " + std::to_string(*std::min_element(velocityY.begin(), velocityY.end())) + ", ";
+        telemetry += "\"MaxVelocityY\": " + std::to_string(*std::max_element(velocityY.begin(), velocityY.end())) + ", ";
+        telemetry += "\"MinVelocityY\": " + std::to_string(*std::min_element(velocityY.begin(), velocityY.end())) + ", ";
+        telemetry += "}";
+        return telemetry;
+    }
+
+    double clamp(double value, double min, double max) {
+        return std::max(min, std::min(value, max));
+    }
+
+    void applyBoundaryConditions() {
+        // Apply no-slip boundary conditions
+        for (int i = 0; i < width; ++i) {
+            velocityX[i] = 0;
+            velocityY[i] = 0;
+            velocityX[(height - 1) * width + i] = 0;
+            velocityY[(height - 1) * width + i] = 0;
+        }
+
+        for (int j = 0; j < height; ++j) {
+            velocityX[j * width] = 0;
+            velocityY[j * width] = 0;
+            velocityX[j * width + (width - 1)] = 0;
+            velocityY[j * width + (width - 1)] = 0;
+        }
+    }
+
+    void adjustTimeStep() {
+        double maxVelocity = 0.0;
+        for (int i = 0; i < width * height; ++i) {
+            double velocityMagnitude = std::sqrt(velocityX[i] * velocityX[i] + velocityY[i] * velocityY[i]);
+            if (velocityMagnitude > maxVelocity) {
+                maxVelocity = velocityMagnitude;
+            }
+        }
+
+        double gridSize = std::min(1.0 / width, 1.0 / height); // Calculate grid size based on the smallest dimension
+
+        if (maxVelocity > 0) {
+            // Ensure timeStep is within a reasonable range
+            timeStep = std::max(1e-6, std::min(timeStep, gridSize / (2.0 * maxVelocity)));
+        }
+    }
+
+    void diffuse() {
+        std::vector<double> velocityX0 = velocityX;
+        std::vector<double> velocityY0 = velocityY;
+
+        double alpha = timeStep * viscosity * width * height;
+        double beta = 1.0 / (4 + alpha);
+
+        for (int k = 0; k < 20; ++k) {
+            for (int j = 1; j < height - 1; ++j) {
+                for (int i = 1; i < width - 1; ++i) {
+                    velocityX[j * width + i] = (velocityX0[j * width + i] + alpha * (
+                        velocityX0[j * width + (i - 1)] + velocityX0[j * width + (i + 1)] +
+                        velocityX0[(j - 1) * width + i] + velocityX0[(j + 1) * width + i])) * beta;
+
+                    velocityY[j * width + i] = (velocityY0[j * width + i] + alpha * (
+                        velocityY0[j * width + (i - 1)] + velocityY0[j * width + (i + 1)] +
+                        velocityY0[(j - 1) * width + i] + velocityY0[(j + 1) * width + i])) * beta;
+                }
+            }
+        }
+    }
+
+    void project() {
+        std::vector<double> div(width * height, 0.0);
+        std::vector<double> p(width * height, 0.0);
+
+        for (int j = 1; j < height - 1; ++j) {
+            for (int i = 1; i < width - 1; ++i) {
+                div[j * width + i] = -0.5 * (
+                    velocityX[j * width + (i + 1)] - velocityX[j * width + (i - 1)] +
+                    velocityY[(j + 1) * width + i] - velocityY[(j - 1) * width + i]) / width;
+
+                p[j * width + i] = 0;
+            }
+        }
+
+        for (int k = 0; k < 20; ++k) {
+            for (int j = 1; j < height - 1; ++j) {
+                for (int i = 1; i < width - 1; ++i) {
+                    p[j * width + i] = (div[j * width + i] + p[j * width + (i - 1)] + p[j * width + (i + 1)] +
+                        p[(j - 1) * width + i] + p[(j + 1) * width + i]) / 4;
+                }
+            }
+        }
+
+        for (int j = 1; j < height - 1; ++j) {
+            for (int i = 1; i < width - 1; ++i) {
+                velocityX[j * width + i] -= 0.5 * (p[j * width + (i + 1)] - p[j * width + (i - 1)]) * width;
+                velocityY[j * width + i] -= 0.5 * (p[(j + 1) * width + i] - p[(j - 1) * width + i]) * height;
+            }
+        }
+    }
+
+    void advect() {
+        std::vector<double> velocityX0 = velocityX;
+        std::vector<double> velocityY0 = velocityY;
+
+        for (int j = 1; j < height - 1; ++j) {
+            for (int i = 1; i < width - 1; ++i) {
+                double x = i - timeStep * velocityX0[j * width + i] * width;
+                double y = j - timeStep * velocityY0[j * width + i] * height;
+
+                x = std::max(0.5, std::min(width - 1.5, x));
+                y = std::max(0.5, std::min(height - 1.5, y));
+                
+                int i0 = static_cast<int>(x);
+                int i1 = i0 + 1;
+                int j0 = static_cast<int>(y);
+                int j1 = j0 + 1;
+
+                double s1 = x - i0;
+                double s0 = 1 - s1;
+                double t1 = y - j0;
+                double t0 = 1 - t1;
+
+                velocityX[j * width + i] = clamp(s0 * (t0 * velocityX0[j0 * width + i0] + t1 * velocityX0[j1 * width + i0]) +
+                                                s1 * (t0 * velocityX0[j0 * width + i1] + t1 * velocityX0[j1 * width + i1]), -10.0, 10.0);
+
+                velocityY[j * width + i] = clamp(s0 * (t0 * velocityY0[j0 * width + i0] + t1 * velocityY0[j1 * width + i0]) +
+                                                s1 * (t0 * velocityY0[j0 * width + i1] + t1 * velocityY0[j1 * width + i1]), -10.0, 10.0);
+            }
+        }
+    }
+};
+
+EMSCRIPTEN_BINDINGS(fluid_simulator_module) {
+    emscripten::value_object<Vector2D>("Vector2D")
+        .field("x", &Vector2D::x)
+        .field("y", &Vector2D::y);
+
+    emscripten::register_vector<double>("vector<double>");
+
+    emscripten::class_<FluidSimulator>("FluidSimulator")
+        .constructor<int, int, double, double, double>()
+        .function("step", &FluidSimulator::step)
+        .function("addForce", &FluidSimulator::addForce)
+        .function("getVelocity", &FluidSimulator::getVelocity)
+        .function("getVelocityFieldX", &FluidSimulator::getVelocityFieldX)
+        .function("getVelocityFieldY", &FluidSimulator::getVelocityFieldY)
+        .function("printVelocityField", &FluidSimulator::outputTelemetry);
+}

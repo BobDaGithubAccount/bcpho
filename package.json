@@ -4,9 +4,10 @@
   "main": "index.js",
   "scripts": {
     "wasm": "bash src/compile_fluidSimulator.sh",
-    "build": "rm -r dist && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
-    "run": "node index.js",
+    "build": "export NODE_PATH=$(npm root -g):$(pwd)/node_modules && rm -r dist && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
+    "run": "node server.js",
     "start": "npm run build && npm run run",
+    "master": "node index.js",
     "worker": ""
   },
   "keywords": [],
@@ -14,15 +15,20 @@
   "license": "ISC",
   "description": "Welcome to our submission for the BPhO Computational Physics Challenge 2024!",
   "dependencies": {
+    "buffer": "^6.0.3",
+    "crypto-browserify": "^3.12.0",
     "express": "^4.19.2",
     "mathjs": "^13.0.3",
     "path-browserify": "^1.0.1",
+    "plotly.js-dist": "^2.34.0",
+    "stream-browserify": "^3.0.0",
     "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^22.1.0",
+    "@types/plotly.js": "^2.33.3",
     "rimraf": "^3.0.2",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.4"
