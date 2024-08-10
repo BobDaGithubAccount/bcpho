@@ -117,3 +117,5 @@ ehthumbs.db
 *.swp
 *.swo
 *.tmp
+
+fluid_simulator/target

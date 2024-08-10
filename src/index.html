@@ -153,10 +153,16 @@
     <input type="number" id="challenge8_speed" value="50"><br>
     <label for="challenge8_height">Launch Height (h):</label>
     <input type="number" id="challenge8_height" value="0"><br>
-    <label for="challenge8_density">Fluid Density:</label>
+    <label for="challenge8_mass">Particle Mass:</label>
+    <input type="number" id="challenge8_mass" value="1"><br>
+    <label for="challenge8_density">Fluid Initial Density:</label>
     <input type="number" id="challenge8_density" value="1"><br>
+    <label for="challenge8_temperature">Fluid Initial Temperature:</label>
+    <input type="number" id="challenge8_temperature" value="293"><br>
+    <label for="challenge8_pressure">Fluid Initial Pressure:</label>
+    <input type="number" id="challenge8_pressure" value="101325"><br>
     <label for="challenge8_viscosity">Fluid Viscosity:</label>
-    <input type="number" id="challenge8_viscosity" value="0.5"><br>
+    <input type="number" id="challenge8_viscosity" value="0.000018"><br>
     <label for="challenge8_force_x">Force Application X:</label>
     <input type="number" id="challenge8_force_x" value="50"><br>
     <label for="challenge8_force_y">Force Application Y:</label>
@@ -165,13 +171,26 @@
     <input type="number" id="challenge8_force_magnitude_x" value="10"><br>
     <label for="challenge8_force_magnitude_y">Force Magnitude Y:</label>
     <input type="number" id="challenge8_force_magnitude_y" value="10"><br>
+    <label for="challenge8_continuous_force">Continuous Force:</label>
+    <select id="challenge8_continuous_force">
+        <option value="false">False</option>
+        <option value="true">True</option>
+    </select><br>
     <label for="challenge8_telemetry">Telemetry:</label>
     <select id="challenge8_telemetry">
         <option value="false">False</option>
         <option value="true">True</option>
     </select><br>
+    <label for="challenge8_renderMode">Render Mode:</label>
+    <select id="challenge8_renderMode">
+        <option value="velocity">Velocity</option>
+        <option value="density">Density</option>
+        <option value="pressure">Pressure</option>
+        <option value="temperature">Temperature</option>
+    </select><br>
     <button id="challenge8_run_simulation">Run simulation</button><br>
     <button id="challenge8_stop_simulation">Stop simulation</button><br>
+    <p1 id="challenge8_logs"></p1><br>
     <canvas id="challenge8_canvas" width="1000" height="1000"></canvas><br>
 
     <h2>Challenge Lagrangian</h2>
