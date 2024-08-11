@@ -8,7 +8,7 @@
     "build-deploy": "mkdir dist && cp -r src/* dist && npx webpack",
     "run": "node server.js",
     "start": "npm run build && npm run run",
-    "master": "node index.js",
+    "master": "node index.js"
   },
   "keywords": [],
   "author": "Stanley Howard",
