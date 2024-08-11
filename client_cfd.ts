@@ -32,34 +32,34 @@ async function startSimulation() {
 }
 
 function addForce(fluidSimulator: FluidSimulator) {
-    const forceX = parseFloat((document.getElementById('challenge8_force_x') as HTMLInputElement).value);
-    const forceY = parseFloat((document.getElementById('challenge8_force_y') as HTMLInputElement).value);
-    const forceMagnitudeX = parseFloat((document.getElementById('challenge8_force_magnitude_x') as HTMLInputElement).value);
-    const forceMagnitudeY = parseFloat((document.getElementById('challenge8_force_magnitude_y') as HTMLInputElement).value);
+    const forceX = parseFloat((document.getElementById('challenge_cfd_force_x') as HTMLInputElement).value);
+    const forceY = parseFloat((document.getElementById('challenge_cfd_force_y') as HTMLInputElement).value);
+    const forceMagnitudeX = parseFloat((document.getElementById('challenge_cfd_force_magnitude_x') as HTMLInputElement).value);
+    const forceMagnitudeY = parseFloat((document.getElementById('challenge_cfd_force_magnitude_y') as HTMLInputElement).value);
 
     fluidSimulator.add_force(forceX, forceY, forceMagnitudeX, forceMagnitudeY);
 }
 
 function animate(fluidSimulator: FluidSimulator) {
     fluidSimulator.step();
-    if((document.getElementById('challenge8_continuous_force') as HTMLInputElement).value === 'true') {
+    if((document.getElementById('challenge_cfd_continuous_force') as HTMLInputElement).value === 'true') {
         addForce(fluidSimulator);
     }
     drawData(fluidSimulator);
     animationFrameId = requestAnimationFrame(() => animate(fluidSimulator));
-    telemetry = (document.getElementById('challenge8_telemetry') as HTMLInputElement).value === 'true';
+    telemetry = (document.getElementById('challenge_cfd_telemetry') as HTMLInputElement).value === 'true';
     if (telemetry) {
-        document.getElementById('challenge8_logs')!.innerHTML = fluidSimulator.get_statistics();
+        document.getElementById('challenge_cfd_logs')!.innerHTML = fluidSimulator.get_statistics();
     }
     return;
 }
 
 function drawData(fluidSimulator: FluidSimulator) {
-    const canvas = document.getElementById('challenge8_canvas') as HTMLCanvasElement;
+    const canvas = document.getElementById('challenge_cfd_canvas') as HTMLCanvasElement;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let renderValue = (document.getElementById('challenge8_renderMode') as HTMLInputElement)?.value;
+    let renderValue = (document.getElementById('challenge_cfd_renderMode') as HTMLInputElement)?.value;
     fluidSimulator.set_rendering_mode(renderValue);
     let renderMode = fluidSimulator.rendering_mode;
 
