@@ -143,24 +143,36 @@
     <canvas id="challenge7_canvas" width="800" height="400"></canvas><br>
     <div id="challenge7_telemetry"></div><br>
 
-    <h2>Challenge 8</h2>
-    <p1>A numeric approach of particle motion under the influence of a fluid using navier stokes, verlet integration and prior kinematics</p1><br>
-    <label for="challenge8_angle">Launch Angle (θ):</label>
-    <input type="number" id="challenge8_angle" value="45"><br>
-    <label for="challenge8_gravity">Gravity (g):</label>
-    <input type="number" id="challenge8_gravity" value="9.81"><br>
-    <label for="challenge8_speed">Launch Speed (u):</label>
-    <input type="number" id="challenge8_speed" value="50"><br>
-    <label for="challenge8_height">Launch Height (h):</label>
-    <input type="number" id="challenge8_height" value="0"><br>
-    <label for="challenge8_density">Fluid Density:</label>
-    <input type="number" id="challenge8_density" value="1"><br>
-    <label for="challenge8_velocity_x">Fluid Velocity (x-component):</label>
-    <input type="number" id="challenge8_velocity_x" value="0"><br>
-    <label for="challenge8_velocity_y">Fluid Velocity (y-component):</label>
-    <input type="number" id="challenge8_velocity_y" value="0"><br>
-    <button id="challenge8_calculate">Calculate</button><br>
-    <canvas id="challenge8_canvas" width="800" height="400"></canvas><br>
+    <h2>Challenge CFD</h2>
+    <p1>A numeric approach of fluid flow simulation using Computational Fluid Dynamics (CFD)</p1><br>
+    <label for="challenge_cfd_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge_cfd_angle" value="45"><br>
+    <label for="challenge_cfd_gravity">Gravity (g):</label>
+    <input type="number" id="challenge_cfd_gravity" value="9.81"><br>
+    <label for="challenge_cfd_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge_cfd_speed" value="50"><br>
+    <label for="challenge_cfd_height">Launch Height (h):</label>
+    <input type="number" id="challenge_cfd_height" value="0"><br>
+    <label for="challenge_cfd_meshSize">Mesh Size:</label>
+    <input type="number" id="challenge_cfd_meshSize" value="10"><br>
+    <label for="challenge_cfd_iterations">Number of Iterations:</label>
+    <input type="number" id="challenge_cfd_iterations" value="100"><br>
+    <label for="challenge_cfd_timestep">Time Step:</label>
+    <input type="number" id="challenge_cfd_timestep" value="0.1"><br>
+    <label for="challenge_cfd_viscosity">Fluid Viscosity:</label>
+    <input type="number" id="challenge_cfd_viscosity" value="0.000018"><br>
+    <label for="challenge_cfd_density">Fluid Density:</label>
+    <input type="number" id="challenge_cfd_density" value="1"><br>
+    <label for="challenge_cfd_boundary">Boundary Conditions:</label>
+    <select id="challenge_cfd_boundary">
+        <option value="inlet">Inlet</option>
+        <option value="outlet">Outlet</option>
+        <option value="wall">Wall</option>
+    </select><br>
+    <button id="challenge_cfd_run_simulation">Run simulation</button><br>
+    <button id="challenge_cfd_stop_simulation">Stop simulation</button><br>
+    <p1 id="challenge_cfd_logs"></p1><br>
+    <canvas id="challenge_cfd_canvas" width="1000" height="1000"></canvas><br>
 
     <h2>Challenge Lagrangian</h2>
     <p1>A numeric approach using lagrangians and the principle of least action UNDER MAINTENANCE - CONVERGENCE PROBLEMS</p1><br>
@@ -175,14 +187,15 @@
     <button id="challenge_lagrangian_startSimulation">Start Simulation</button><br>
     <canvas id="challenge_lagrangian_canvas" width="800" height="400"></canvas><br>
 
-    <script src="/bcpho/static/client_1.js"></script>
-    <script src="/bcpho/static/client_2.js"></script>
-    <script src="/bcpho/static/client_3.js"></script>
-    <script src="/bcpho/static/client_4.js"></script>
-    <script src="/bcpho/static/client_5.js"></script>
-    <script src="/bcpho/static/client_6.js"></script>
-    <script src="/bcpho/static/client_7.js"></script>
-    <script src="/bcpho/static/client_8.js"></script>
-    <script src="/bcpho/static/client_lagrangian.js"></script>
-</body>
+    <script src="client_1.bundle.js"></script>
+    <script src="client_2.bundle.js"></script>
+    <script src="client_3.bundle.js"></script>
+    <script src="client_4.bundle.js"></script>
+    <script src="client_5.bundle.js"></script>
+    <script src="client_6.bundle.js"></script>
+    <script src="client_7.bundle.js"></script>
+    <script src="client_8.bundle.js"></script>
+    <script src="client_cfd.bundle.js"></script>
+    <script src="client_lagrangian.bundle.js"></script>
+  </body>
 </html>
