@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "wasm": "bash src/compile_fluidSimulator.sh",
-    "build": "export NODE_PATH=$(npm root -g):$(pwd)/node_modules && rm -r dist && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
-    "build-deploy": "mkdir dist && cp -r src/* dist && npx webpack",
+    "build": "export NODE_PATH=$(npm root -g):$(pwd)/node_modules && if [ -d dist ]; then rm -r dist; fi && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
+    "build-deploy": "if [ -d dist ]; then rm -r dist; fi && mkdir dist && npx webpack",
     "run": "node server.js",
     "start": "npm run build && npm run run",
     "master": "node index.js"
