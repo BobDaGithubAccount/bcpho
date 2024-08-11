@@ -143,6 +143,57 @@
     <canvas id="challenge7_canvas" width="800" height="400"></canvas><br>
     <div id="challenge7_telemetry"></div><br>
 
+    <h2>Challenge 8</h2>
+    <p1>A numeric approach to the dragless particle model incorporating bounces</p1><br>
+    <label for="challenge8_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge8_angle" value="45"><br>
+    <label for="challenge8-gravity">Gravity (g):</label>
+    <input type="number" id="challenge8_gravity" value="9.81"><br>
+    <label for="challenge8_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge8_speed" value="50"><br>
+    <label for="challenge8_height">Launch Height (h):</label>
+    <input type="number" id="challenge8_height" value="0"><br>
+    <label for="challenge8_cor">Coefficient of restitution (e):</label>
+    <input type="number" id="challenge8_cor" value="0.5" min="0" max="1" step="0.1"><br>
+    <label for="challenge8_bounces">Number of bounces (N):</label>
+    <input type="number" id="challenge8_bounces" value="10"><br>
+    <select id="challenge8_mode">
+        <option value="static">Static</option>
+        <option value="animation">Animation</option>
+    </select><br>
+    <canvas id="challenge8_canvas" width="800" height="400"></canvas>
+    <div id="challenge8_telemetry"></div><br>
+
+    <h2>Challenge 9</h2>
+    <p1>A numeric approach comparing the drag respecting and dragless particle models with bounces</p1><br>
+    <label for="challenge9_gravity">Gravity (g):</label>
+    <input type="number" id="challenge9_gravity" value="9.81" min="0"><br>
+    <label for="challenge9_height">Initial Height (h):</label>
+    <input type="number" id="challenge9_height" value="0" min="0"><br>
+    <label for="challenge9_speed">Initial Speed (u):</label>
+    <input type="number" id="challenge9_speed" value="50" min="0"><br>
+    <label for="challenge9_angle">Launch Angle:</label>
+    <input type="number" id="challenge9_angle" value="45" min="0"><br>
+    <label for="challenge9_dragCoefficient">Drag Coefficient (Cd):</label>
+    <input type="number" id="challenge9_dragCoefficient" value="0.47" min="0" max="1" step="0.01"><br>
+    <label for="challenge9_airDensity">Air Density (ρ):</label>
+    <input type="number" id="challenge9_airDensity" value="1.2" min="0" step="0.1"><br>
+    <label for="challenge9_area">Cross-sectional Area (A):</label>
+    <input type="number" id="challenge9_area" value="0.1" min="0" step="0.1"><br>
+    <label for="challenge9_mass">Mass (m):</label>
+    <input type="number" id="challenge9_mass" value="1" min="0"><br>
+    <label for="challenge9_cor">Coefficient of restitution (e):</label>
+    <input type="number" id="challenge9_cor" value="0.5" min="0" max="1" step="0.1"><br>
+    <label for="challenge9_bounces">Number of bounces (N):</label>
+    <input type="number" id="challenge9_bounces" value="10" min="0"><br>
+    <select id="challenge9_mode"><br>
+        <option value="static">Static</option>
+        <option value="animation">Animation</option>
+    </select><br>
+    <canvas id="challenge9_canvas" width="800" height="400"></canvas><br>
+    <div id="challenge9_telemetry"></div><br>
+    
+
     <h2>Challenge CFD</h2>
     <p1>Fluid simulation for drag simulation</p1><br>
     <label for="challenge_cfd_angle">Launch Angle (θ):</label>
@@ -214,7 +265,8 @@
     <script src="client_6.bundle.js"></script>
     <script src="client_7.bundle.js"></script>
     <script src="client_8.bundle.js"></script>
-    <script src="client_cfd.bundle.js"></script>
+    <script src="client_9.bundle.js"></script>
+    <!-- <script src="client_cfd.bundle.js"></script> -->
     <script src="client_lagrangian.bundle.js"></script>
   </body>
 </html>
