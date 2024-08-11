@@ -11,6 +11,7 @@ module.exports = {
     client_6: './src/client_6.ts',
     client_7: './src/client_7.ts',
     client_8: './src/client_8.ts',
+    client_8: './src/client_cfd.ts',
     client_lagrangian: './src/client_lagrangian.ts'
   },
   output: {
