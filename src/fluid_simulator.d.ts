@@ -29,9 +29,6 @@ export class FluidSimulator {
 */
   constructor(width: number, height: number, time_step: number, viscosity: number, initial_density: number, initial_temperature: number, initial_pressure: number, gravity: number, particle: Particle);
 /**
-*/
-  step(): void;
-/**
 * @param {number} x
 * @param {number} y
 * @param {number} force_x
@@ -39,39 +36,16 @@ export class FluidSimulator {
 */
   add_force(x: number, y: number, force_x: number, force_y: number): void;
 /**
+*/
+  step(): void;
+/**
 * @param {string} rendering_mode
 */
   set_rendering_mode(rendering_mode: string): void;
 /**
-* @param {number} x
-* @param {number} y
 * @returns {any}
 */
-  get_data(x: number, y: number): any;
-/**
-* @param {number} x
-* @param {number} y
-* @returns {Vector2D}
-*/
-  get_velocity(x: number, y: number): Vector2D;
-/**
-* @param {number} x
-* @param {number} y
-* @returns {number}
-*/
-  get_density(x: number, y: number): number;
-/**
-* @param {number} x
-* @param {number} y
-* @returns {number}
-*/
-  get_pressure(x: number, y: number): number;
-/**
-* @param {number} x
-* @param {number} y
-* @returns {number}
-*/
-  get_temperature(x: number, y: number): number;
+  get_data(): any;
 /**
 * @returns {string}
 */
@@ -97,6 +71,9 @@ export class FluidSimulator {
 /**
 */
   temperature: Float64Array;
+/**
+*/
+  time: number;
 /**
 */
   time_step: number;
@@ -172,6 +149,8 @@ export interface InitOutput {
   readonly __wbg_set_fluidsimulator_height: (a: number, b: number) => void;
   readonly __wbg_get_fluidsimulator_time_step: (a: number) => number;
   readonly __wbg_set_fluidsimulator_time_step: (a: number, b: number) => void;
+  readonly __wbg_get_fluidsimulator_time: (a: number) => number;
+  readonly __wbg_set_fluidsimulator_time: (a: number, b: number) => void;
   readonly __wbg_get_fluidsimulator_viscosity: (a: number) => number;
   readonly __wbg_set_fluidsimulator_viscosity: (a: number, b: number) => void;
   readonly __wbg_get_fluidsimulator_density: (a: number, b: number) => void;
@@ -191,14 +170,10 @@ export interface InitOutput {
   readonly __wbg_get_fluidsimulator_rendering_mode: (a: number) => number;
   readonly __wbg_set_fluidsimulator_rendering_mode: (a: number, b: number) => void;
   readonly fluidsimulator_new: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number) => number;
-  readonly fluidsimulator_step: (a: number) => void;
   readonly fluidsimulator_add_force: (a: number, b: number, c: number, d: number, e: number) => void;
+  readonly fluidsimulator_step: (a: number) => void;
   readonly fluidsimulator_set_rendering_mode: (a: number, b: number, c: number) => void;
-  readonly fluidsimulator_get_data: (a: number, b: number, c: number) => number;
-  readonly fluidsimulator_get_velocity: (a: number, b: number, c: number) => number;
-  readonly fluidsimulator_get_density: (a: number, b: number, c: number) => number;
-  readonly fluidsimulator_get_pressure: (a: number, b: number, c: number) => number;
-  readonly fluidsimulator_get_temperature: (a: number, b: number, c: number) => number;
+  readonly fluidsimulator_get_data: (a: number) => number;
   readonly fluidsimulator_get_statistics: (a: number, b: number) => void;
   readonly __wbg_get_vector2d_y: (a: number) => number;
   readonly __wbg_get_vector2d_x: (a: number) => number;

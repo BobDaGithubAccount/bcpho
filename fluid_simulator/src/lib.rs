@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 use web_sys::console;
+use serde::Serialize;
+use serde_json::to_string;
 
 #[wasm_bindgen]
 pub fn console_log(s: &str) {
@@ -8,6 +10,7 @@ pub fn console_log(s: &str) {
 
 #[wasm_bindgen]
 #[derive(Clone)]
+#[derive(Serialize)]
 pub struct Vector2D {
     #[wasm_bindgen(getter_with_clone)]
     pub x: f64,
@@ -25,6 +28,7 @@ impl Vector2D {
 
 #[wasm_bindgen]
 #[derive(Clone)]
+#[derive(Serialize)]
 pub struct Particle {
     #[wasm_bindgen(getter_with_clone)]
     pub position: Vector2D,
@@ -48,7 +52,7 @@ impl Particle {
 
 #[wasm_bindgen]
 #[derive(Clone)]
-
+#[derive(Serialize)]
 pub enum RenderingMode {
     Velocity,
     Density,
@@ -64,6 +68,8 @@ pub struct FluidSimulator {
     pub height: usize,
     #[wasm_bindgen(getter_with_clone)]
     pub time_step: f64,
+    #[wasm_bindgen(getter_with_clone)]
+    pub time: f64,
     #[wasm_bindgen(getter_with_clone)]
     pub viscosity: f64,
     #[wasm_bindgen(getter_with_clone)]
@@ -89,10 +95,12 @@ impl FluidSimulator {
     #[wasm_bindgen(constructor)]
     pub fn new(width: usize, height: usize, time_step: f64, viscosity: f64, initial_density: f64, initial_temperature: f64, initial_pressure: f64, gravity: f64, particle: Particle) -> Self {
         console_log("Creating new FluidSimulator");
+        let time: f64 = 0.0;
         FluidSimulator {
             width,
             height,
             time_step,
+            time,
             viscosity,
             density: vec![initial_density; width * height],
             velocity_x: vec![0.0; width * height],
@@ -101,23 +109,8 @@ impl FluidSimulator {
             temperature: vec![initial_temperature; width * height],
             gravity,
             particle,
-            rendering_mode: RenderingMode::Velocity
+            rendering_mode: RenderingMode::Velocity,
         }
-    }
-
-    #[wasm_bindgen]
-    pub fn step(&mut self) {
-        self.advection();
-        self.diffusion();
-        self.update_pressure();
-        self.update_velocity();
-        self.update_density();
-        self.update_temperature();
-        self.handle_compressibility();
-        self.project();
-        self.apply_particle_forces();
-        self.update_particle();
-        self.apply_boundary_conditions();
     }
 
     #[wasm_bindgen]
@@ -125,6 +118,323 @@ impl FluidSimulator {
         let index = y * self.width + x;
         self.velocity_x[index] += force_x * self.time_step;
         self.velocity_y[index] += force_y * self.time_step;
+    }
+
+    fn update_particle(&mut self) {
+        let index = (self.particle.position.y.round() as usize) * self.width + (self.particle.position.x.round() as usize);
+        let force_x = self.velocity_x[index] * self.particle.mass;
+        let force_y = (self.velocity_y[index] * self.particle.mass) + (self.gravity);
+        
+        self.particle.velocity.x += force_x * self.time_step / self.particle.mass;
+        self.particle.velocity.y += force_y * self.time_step / self.particle.mass;
+
+        self.particle.position.x += self.particle.velocity.x * self.time_step;
+        self.particle.position.y += self.particle.velocity.y * self.time_step;
+        
+        if self.particle.position.x < 0.0 {
+            self.particle.position.x = 0.0;
+            self.particle.velocity.x *= -0.5;
+        } else if self.particle.position.x >= self.width as f64 {
+            self.particle.position.x = self.width as f64 - 1.0;
+            self.particle.velocity.x *= -0.5;
+        }
+
+        if self.particle.position.y < 0.0 {
+            self.particle.position.y = 0.0;
+            self.particle.velocity.y *= -0.5;
+        } else if self.particle.position.y >= self.height as f64 {
+            self.particle.position.y = self.height as f64 - 1.0;
+            self.particle.velocity.y *= -0.5;
+        }
+    }
+
+    #[wasm_bindgen]
+    pub fn step(&mut self) {
+        self.update_pressure();
+        console_log("Completed step: update_pressure");
+        self.update_velocity();
+        console_log("Completed step: update_velocity");
+        self.update_density();
+        console_log("Completed step: update_density");
+        self.update_temperature();
+        console_log("Completed step: update_temperature");
+        self.update_particle();
+        console_log("Completed step: update_particle");
+        self.apply_boundary_conditions();
+        console_log("Completed step: apply_boundary_conditions");
+        self.time += self.time_step;
+        console_log("Completed step: increment time");
+    }
+
+    //Momentum Equation
+    fn update_velocity(&mut self) {
+        self.advection();
+        self.diffusion();
+        self.handle_compressibility();
+        self.apply_forces();
+        self.apply_pressure_forces();    
+    }
+
+    fn apply_forces(&mut self) {
+        // let g = self.gravity;
+        // let width = self.width;
+        // let height = self.height;
+    
+        // for y in 0..height {
+        //     for x in 0..width {
+        //         let index = y * width + x;
+        //         self.velocity_y[index] += g * self.time_step;
+        //     }
+        // }
+    }
+    
+    fn apply_pressure_forces(&mut self) {
+        let width = self.width;
+        let height = self.height;
+    
+        for y in 1..height-1 {
+            for x in 1..width-1 {
+                let index = y * width + x;
+    
+                let pressure_x = (self.pressure[index + 1] - self.pressure[index - 1]) / (2.0 * self.density[index]);
+                let pressure_y = (self.pressure[index + width] - self.pressure[index - width]) / (2.0 * self.density[index]);
+    
+                self.velocity_x[index] -= self.time_step * pressure_x;
+                self.velocity_y[index] -= self.time_step * pressure_y;
+            }
+        }
+    }
+
+    fn advection(&mut self) {
+        let dt0 = self.time_step * self.width as f64;
+        for y in 1..self.height - 1 {
+            for x in 1..self.width - 1 {
+                let index = y * self.width + x;
+                let mut x0 = x as f64 - dt0 * self.velocity_x[index];
+                let mut y0 = y as f64 - dt0 * self.velocity_y[index];
+
+                if x0 < 0.5 {
+                    x0 = 0.5;
+                }
+                if x0 > self.width as f64 - 1.5 {
+                    x0 = self.width as f64 - 1.5;
+                }
+                if y0 < 0.5 {
+                    y0 = 0.5;
+                }
+                if y0 > self.height as f64 - 1.5 {
+                    y0 = self.height as f64 - 1.5;
+                }
+
+                let i0 = x0.floor() as usize;
+                let i1 = i0 + 1;
+                let j0 = y0.floor() as usize;
+                let j1 = j0 + 1;
+
+                let s1 = x0 - i0 as f64;
+                let s0 = 1.0 - s1;
+                let t1 = y0 - j0 as f64;
+                let t0 = 1.0 - t1;
+
+                self.velocity_x[index] = s0
+                    * (t0 * self.velocity_x[j0 * self.width + i0]
+                        + t1 * self.velocity_x[j1 * self.width + i0])
+                    + s1
+                        * (t0 * self.velocity_x[j0 * self.width + i1]
+                            + t1 * self.velocity_x[j1 * self.width + i1]);
+
+                self.velocity_y[index] = s0
+                    * (t0 * self.velocity_y[j0 * self.width + i0]
+                        + t1 * self.velocity_y[j1 * self.width + i0])
+                    + s1
+                        * (t0 * self.velocity_y[j0 * self.width + i1]
+                            + t1 * self.velocity_y[j1 * self.width + i1]);
+            }
+        }
+    }
+
+    fn diffusion(&mut self) {
+        let a = self.time_step * self.viscosity * self.width as f64 * self.height as f64;
+        let c = 1.0 + 4.0 * a;
+        for _ in 0..20 {
+            for y in 1..self.height - 1 {
+                for x in 1..self.width - 1 {
+                    let index = y * self.width + x;
+                    self.velocity_x[index] = (self.velocity_x[index]
+                        + a * (self.velocity_x[index - 1]
+                            + self.velocity_x[index + 1]
+                            + self.velocity_x[index - self.width]
+                            + self.velocity_x[index + self.width]))
+                        / c;
+                    self.velocity_y[index] = (self.velocity_y[index]
+                        + a * (self.velocity_y[index - 1]
+                            + self.velocity_y[index + 1]
+                            + self.velocity_y[index - self.width]
+                            + self.velocity_y[index + self.width]))
+                        / c;
+                }
+            }
+        }
+    }
+
+    fn update_pressure(&mut self) {
+        let width = self.width;
+        let height = self.height;
+        let dt = self.time_step;
+        let mut div = vec![0.0; width * height];
+        let mut p = vec![0.0; width * height];
+
+        for j in 1..height - 1 {
+            for i in 1..width - 1 {
+                let index = j * width + i;
+                div[index] = -0.5
+                    * (self.velocity_x[index + 1] - self.velocity_x[index - 1]
+                        + self.velocity_y[index + width] - self.velocity_y[index - width])
+                    / width as f64;
+                p[index] = 0.0;
+            }
+        }
+
+        for _ in 0..20 {
+            for j in 1..height - 1 {
+                for i in 1..width - 1 {
+                    let index = j * width + i;
+                    p[index] = (div[index]
+                        + p[index - 1]
+                        + p[index + 1]
+                        + p[index - width]
+                        + p[index + width])
+                        / 4.0;
+                }
+            }
+        }
+
+        for j in 1..height - 1 {
+            for i in 1..width - 1 {
+                let index = j * width + i;
+                self.velocity_x[index] -= 0.5 * width as f64 * (p[index + 1] - p[index - 1]);
+                self.velocity_y[index] -= 0.5 * height as f64 * (p[index + width] - p[index - width]);
+            }
+        }
+    }
+
+    fn update_density(&mut self) {
+        let width = self.width;
+        let height = self.height;
+        let mut new_density = vec![0.0; width * height];
+    
+        for y in 1..height-1 {
+            for x in 1..width-1 {
+                let index = y * width + x;
+                let vel_x = self.velocity_x[index];
+                let vel_y = self.velocity_y[index];
+    
+                let x_pos = x as f64 - self.time_step * vel_x;
+                let y_pos = y as f64 - self.time_step * vel_y;
+    
+                let x0 = x_pos.max(0.5).min(width as f64 - 1.5).floor() as usize;
+                let y0 = y_pos.max(0.5).min(height as f64 - 1.5).floor() as usize;
+    
+                let s1 = x_pos - x0 as f64;
+                let s0 = 1.0 - s1;
+                let t1 = y_pos - y0 as f64;
+                let t0 = 1.0 - t1;
+    
+                new_density[index] = s0 * (t0 * self.density[y0 * width + x0] + t1 * self.density[(y0 + 1) * width + x0]) +
+                                     s1 * (t0 * self.density[y0 * width + (x0 + 1)] + t1 * self.density[(y0 + 1) * width + (x0 + 1)]);
+            }
+        }
+    
+        self.density.copy_from_slice(&new_density);
+    }
+    
+    fn update_temperature(&mut self) {
+        let width = self.width;
+        let height = self.height;
+        let mut new_temperature = vec![0.0; width * height];
+        let k = 0.024;
+        
+        for y in 1..height-1 {
+            for x in 1..width-1 {
+                let index = y * width + x;
+                let vel_x = self.velocity_x[index];
+                let vel_y = self.velocity_y[index];
+                let density = self.density[index];
+                // let internal_energy = self.internal_energy(index);
+    
+                let x_pos = x as f64 - self.time_step * vel_x;
+                let y_pos = y as f64 - self.time_step * vel_y;
+    
+                let x0 = x_pos.max(0.5).min(width as f64 - 1.5).floor() as usize;
+                let y0 = y_pos.max(0.5).min(height as f64 - 1.5).floor() as usize;
+    
+                let s1 = x_pos - x0 as f64;
+                let s0 = 1.0 - s1;
+                let t1 = y_pos - y0 as f64;
+                let t0 = 1.0 - t1;
+    
+                let advected_temp = s0 * (t0 * self.temperature[y0 * width + x0] + t1 * self.temperature[(y0 + 1) * width + x0]) +
+                                    s1 * (t0 * self.temperature[y0 * width + (x0 + 1)] + t1 * self.temperature[(y0 + 1) * width + (x0 + 1)]);
+    
+                let diffused_temp = k * ((self.temperature[index - 1] + self.temperature[index + 1] + 
+                                          self.temperature[index - width] + self.temperature[index + width]) - 
+                                          4.0 * self.temperature[index]);
+    
+                let viscous_dissipation = self.viscous_dissipation(index);
+    
+                new_temperature[index] = advected_temp + diffused_temp * self.time_step + viscous_dissipation * self.time_step;
+            }
+        }
+    
+        self.temperature.copy_from_slice(&new_temperature);
+    }
+    
+    fn viscous_dissipation(&self, index: usize) -> f64 {
+        let mu = self.viscosity;
+        let grad_u_x = (self.velocity_x[index + 1] - self.velocity_x[index - 1]) / 2.0;
+        let grad_u_y = (self.velocity_y[index + self.width] - self.velocity_y[index - self.width]) / 2.0;
+        mu * (grad_u_x * grad_u_x + grad_u_y * grad_u_y)
+    }
+    
+    fn handle_compressibility(&mut self) {
+        for y in 1..self.height - 1 {
+            for x in 1..self.width - 1 {
+                let index = y * self.width + x;
+                let div = (self.velocity_x[index + 1] - self.velocity_x[index - 1]
+                    + self.velocity_y[index + self.width] - self.velocity_y[index - self.width])
+                    * 0.5;
+                self.pressure[index] -= div;
+            }
+        }
+    }
+
+    fn apply_boundary_conditions(&mut self) {
+        let width = self.width;
+        let height = self.height;
+        
+        for i in 0..width {
+            let index_top = i;
+            if self.velocity_y[index_top] > 0.0 {
+            self.velocity_y[index_top] = 0.0;
+            }
+        
+            let index_bottom = (height - 1) * width + i;
+            if self.velocity_y[index_bottom] < 0.0 {
+            self.velocity_y[index_bottom] = 0.0;
+            }
+        }
+        
+        for j in 0..height {
+            let index_left = j * width;
+            if self.velocity_x[index_left] > 0.0 {
+            self.velocity_x[index_left] = 0.0;
+            }
+        
+            let index_right = j * width + (width - 1);
+            if self.velocity_x[index_right] < 0.0 {
+            self.velocity_x[index_right] = 0.0;
+            }
+        }
     }
 
     #[wasm_bindgen]
@@ -138,6 +448,7 @@ impl FluidSimulator {
         }
     }
 
+    #[wasm_bindgen]
     pub fn get_data(&self) -> JsValue {
         let mut data: Vec<Vec<Vec<f64>>> = vec![vec![vec![0.0]; self.width]; self.height];
         for y in 0..self.height {
@@ -157,31 +468,8 @@ impl FluidSimulator {
                 };
             }
         }
-        JsValue::from_serde(&Data { data }).unwrap()
-    }
-
-    #[wasm_bindgen]
-    pub fn get_velocity(&self, x: usize, y: usize) -> Vector2D {
-        let index = y * self.width + x;
-        Vector2D {
-            x: self.velocity_x[index],
-            y: self.velocity_y[index],
-        }
-    }
-
-    #[wasm_bindgen]
-    pub fn get_density(&self, x: usize, y: usize) -> f64 {
-        self.density[y * self.width + x]
-    }
-
-    #[wasm_bindgen]
-    pub fn get_pressure(&self, x: usize, y: usize) -> f64 {
-        self.pressure[y * self.width + x]
-    }
-
-    #[wasm_bindgen]
-    pub fn get_temperature(&self, x: usize, y: usize) -> f64 {
-        self.temperature[y * self.width + x]
+        let json = to_string(&data).unwrap();
+        JsValue::from_str(&json)
     }
 
     #[wasm_bindgen]
@@ -189,19 +477,23 @@ impl FluidSimulator {
         let avg_density = self.density.iter().sum::<f64>() / self.density.len() as f64;
         let min_density = self.density.iter().cloned().fold(f64::INFINITY, f64::min);
         let max_density = self.density.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
         let avg_velocity_x = self.velocity_x.iter().sum::<f64>() / self.velocity_x.len() as f64;
         let min_velocity_x = self.velocity_x.iter().cloned().fold(f64::INFINITY, f64::min);
         let max_velocity_x = self.velocity_x.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
         let avg_velocity_y = self.velocity_y.iter().sum::<f64>() / self.velocity_y.len() as f64;
         let min_velocity_y = self.velocity_y.iter().cloned().fold(f64::INFINITY, f64::min);
         let max_velocity_y = self.velocity_y.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
         let avg_pressure = self.pressure.iter().sum::<f64>() / self.pressure.len() as f64;
         let min_pressure = self.pressure.iter().cloned().fold(f64::INFINITY, f64::min);
         let max_pressure = self.pressure.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-    
+
+        let avg_temp = self.temperature.iter().sum::<f64>() / self.temperature.len() as f64;
+        let min_temp = self.temperature.iter().cloned().fold(f64::INFINITY, f64::min);
+        let max_temp = self.temperature.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+
         format!(
             "Avg Density: {}<br>\
             Min Density: {}<br>\
@@ -214,7 +506,11 @@ impl FluidSimulator {
             Max Velocity Y: {}<br>\
             Avg Pressure: {}<br>\
             Min Pressure: {}<br>\
-            Max Pressure: {}",
+            Max Pressure: {}<br>\
+            Avg Temperature: {}<br>\
+            Min Temperature: {}<br>\
+            Max Temperature: {}<br>\
+            Time: {}<br>",
             avg_density,
             min_density,
             max_density,
@@ -226,288 +522,11 @@ impl FluidSimulator {
             max_velocity_y,
             avg_pressure,
             min_pressure,
-            max_pressure
+            max_pressure,
+            avg_temp,
+            min_temp,
+            max_temp,
+            self.time
         )
-    }
-
-    fn advection(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let dt = self.time_step;
-        let mut new_velocity_x = vec![0.0; width * height];
-        let mut new_velocity_y = vec![0.0; width * height];
-    
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-                let mut x_pos = x as f64 - dt * self.velocity_x[index];
-                let mut y_pos = y as f64 - dt * self.velocity_y[index];
-    
-                x_pos = x_pos.max(0.5).min(width as f64 - 1.5);
-                y_pos = y_pos.max(0.5).min(height as f64 - 1.5);
-    
-                let x0 = x_pos.floor() as usize;
-                let x1 = x0 + 1;
-                let y0 = y_pos.floor() as usize;
-                let y1 = y0 + 1;
-    
-                let s1 = x_pos - x0 as f64;
-                let s0 = 1.0 - s1;
-                let t1 = y_pos - y0 as f64;
-                let t0 = 1.0 - t1;
-    
-                new_velocity_x[index] = s0 * (t0 * self.velocity_x[y0 * width + x0] + t1 * self.velocity_x[y1 * width + x0]) +
-                                        s1 * (t0 * self.velocity_x[y0 * width + x1] + t1 * self.velocity_x[y1 * width + x1]);
-    
-                new_velocity_y[index] = s0 * (t0 * self.velocity_y[y0 * width + x0] + t1 * self.velocity_y[y1 * width + x0]) +
-                                        s1 * (t0 * self.velocity_y[y0 * width + x1] + t1 * self.velocity_y[y1 * width + x1]);
-            }
-        }
-    
-        self.velocity_x.copy_from_slice(&new_velocity_x);
-        self.velocity_y.copy_from_slice(&new_velocity_y);
-    }
-
-    fn diffusion(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let dt = self.time_step;
-        let viscosity = self.viscosity;
-        let alpha = dt * viscosity * (width as f64 * height as f64) / (width as f64 * height as f64);
-    
-        let mut new_velocity_x = vec![0.0; width * height];
-        let mut new_velocity_y = vec![0.0; width * height];
-    
-        for _ in 0..20 {
-            for y in 1..height-1 {
-                for x in 1..width-1 {
-                    let index = y * width + x;
-                    new_velocity_x[index] = (self.velocity_x[index] + alpha * (
-                        self.velocity_x[y * width + (x - 1)] + self.velocity_x[y * width + (x + 1)] +
-                        self.velocity_x[(y - 1) * width + x] + self.velocity_x[(y + 1) * width + x])) / (1.0 + 4.0 * alpha);
-    
-                    new_velocity_y[index] = (self.velocity_y[index] + alpha * (
-                        self.velocity_y[y * width + (x - 1)] + self.velocity_y[y * width + (x + 1)] +
-                        self.velocity_y[(y - 1) * width + x] + self.velocity_y[(y + 1) * width + x])) / (1.0 + 4.0 * alpha);
-                }
-            }
-        }
-    
-        self.velocity_x.copy_from_slice(&new_velocity_x);
-        self.velocity_y.copy_from_slice(&new_velocity_y);
-    }
-
-    fn update_pressure(&mut self) {
-        let k = 0.1;
-        let width = self.width;
-        let height = self.height;
-
-        for y in 0..height {
-            for x in 0..width {
-                let index = y * width + x;
-                self.pressure[index] = k * self.density[index];
-            }
-        }
-    }
-
-    fn update_temperature(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let mut new_temperature = vec![0.0; width * height];
-
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-                let vel_x = self.velocity_x[index];
-                let vel_y = self.velocity_y[index];
-
-                let x_pos = x as f64 - self.time_step * vel_x;
-                let y_pos = y as f64 - self.time_step * vel_y;
-
-                let x0 = x_pos.max(0.5).min(width as f64 - 1.5).floor() as usize;
-                let y0 = y_pos.max(0.5).min(height as f64 - 1.5).floor() as usize;
-
-                let s1 = x_pos - x0 as f64;
-                let s0 = 1.0 - s1;
-                let t1 = y_pos - y0 as f64;
-                let t0 = 1.0 - t1;
-
-                new_temperature[index] = s0 * (t0 * self.temperature[y0 * width + x0] + t1 * self.temperature[(y0 + 1) * width + x0]) +
-                                         s1 * (t0 * self.temperature[y0 * width + (x0 + 1)] + t1 * self.temperature[(y0 + 1) * width + (x0 + 1)]);
-            }
-        }
-
-        self.temperature.copy_from_slice(&new_temperature);
-    }
-
-    fn handle_compressibility(&mut self) {
-        // let gamma = 1.4; // Specific heat ratio for an ideal gas
-        let r = 287.0; // Specific gas constant for air
-        let width = self.width;
-        let height = self.height;
-
-        for y in 0..height {
-            for x in 0..width {
-                let index = y * width + x;
-                if self.density[index] == 0.0 {
-                    continue;
-                }
-                self.pressure[index] = self.density[index] * r * self.temperature[index];
-                self.velocity_x[index] += -(self.time_step / self.density[index]) * (self.pressure[y * width + (x + 1)] - self.pressure[y * width + (x - 1)]) / 2.0;
-                self.velocity_y[index] += -(self.time_step / self.density[index]) * (self.pressure[(y + 1) * width + x] - self.pressure[(y - 1) * width + x]) / 2.0;
-            }
-        }
-    }
-
-    // Modify `update_velocity` to include non-linear advection and external forces
-    fn update_velocity(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let mut new_velocity_x = vec![0.0; width * height];
-        let mut new_velocity_y: Vec<f64> = vec![0.0; width * height];
-    
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-
-                // Advection term (u ⋅ \del)u
-                let advect_x = self.velocity_x[index] * (self.velocity_x[y * width + (x + 1)] - self.velocity_x[y * width + (x - 1)]) / 2.0;
-                let advect_y = self.velocity_y[index] * (self.velocity_y[(y + 1) * width + x] - self.velocity_y[(y - 1) * width + x]) / 2.0;
-
-                // External force (gravity)
-                let external_force_x = 0.0;
-                let external_force_y = -1.0*self.gravity;
-
-                new_velocity_x[index] = self.velocity_x[index] - 
-                    (self.pressure[y * width + (x + 1)] - self.pressure[y * width + (x - 1)]) / 2.0 +
-                    advect_x + external_force_x;
-
-                new_velocity_y[index] = self.velocity_y[index] - 
-                    (self.pressure[(y + 1) * width + x] - self.pressure[(y - 1) * width + x]) / 2.0 +
-                    advect_y + external_force_y;
-            }
-        }
-    
-        self.velocity_x.copy_from_slice(&new_velocity_x);
-        self.velocity_y.copy_from_slice(&new_velocity_y);
-    }
-
-
-    fn apply_boundary_conditions(&mut self) {
-        let width = self.width;
-        let height = self.height;
-    
-        for x in 0..width {
-            self.velocity_x[x] = 0.0;
-            self.velocity_x[(height - 1) * width + x] = 0.0;
-            self.velocity_y[x] = 0.0;
-            self.velocity_y[(height - 1) * width + x] = 0.0;
-        }
-    
-        for y in 0..height {
-            self.velocity_x[y * width] = 0.0;
-            self.velocity_x[y * width + (width - 1)] = 0.0;
-            self.velocity_y[y * width] = 0.0;
-            self.velocity_y[y * width + (width - 1)] = 0.0;
-        }
-    }
-
-    fn apply_particle_forces(&mut self) {
-        let px = self.particle.position.x as usize;
-        let py = self.particle.position.y as usize;
-
-        if px < self.width && py < self.height {
-            let index = py * self.width + px;
-
-            let fluid_force_x = -self.density[index] * self.velocity_x[index];
-            let fluid_force_y = -self.density[index] * self.velocity_y[index];
-
-            self.particle.velocity.x += fluid_force_x * self.time_step / self.particle.mass;
-            self.particle.velocity.y += fluid_force_y * self.time_step / self.particle.mass;
-
-            let particle_force_x = self.particle.velocity.x * self.particle.mass;
-            let particle_force_y = self.particle.velocity.y * self.particle.mass;
-
-            self.velocity_x[index] += particle_force_x * self.time_step;
-            self.velocity_y[index] += particle_force_y * self.time_step;
-        }
-    }
-
-    fn update_particle(&mut self) {
-        self.particle.position.x += self.particle.velocity.x * self.time_step;
-        self.particle.position.y += self.particle.velocity.y * self.time_step;
-
-        self.particle.position.x = self.particle.position.x.max(0.0).min(self.width as f64 - 1.0);
-        self.particle.position.y = self.particle.position.y.max(0.0).min(self.height as f64 - 1.0);
-    }
-
-    fn project(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let mut div = vec![0.0; width * height];
-        let mut p = vec![0.0; width * height];
-
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-                let rho = self.density[index];
-                let drho_dt = (self.density[y * width + (x + 1)] - self.density[y * width + (x - 1)] +
-                               self.density[(y + 1) * width + x] - self.density[(y - 1) * width + x]) / (2.0 * self.time_step);
-                let u_dot_grad_rho = self.velocity_x[index] * (self.density[y * width + (x + 1)] - self.density[y * width + (x - 1)]) / 2.0 +
-                                     self.velocity_y[index] * (self.density[(y + 1) * width + x] - self.density[(y - 1) * width + x]) / 2.0;
-                div[index] = (drho_dt + u_dot_grad_rho) / rho;
-                p[index] = 0.0;
-            }
-        }
-    
-        for _ in 0..20 {
-            for y in 1..height-1 {
-                for x in 1..width-1 {
-                    let index = y * width + x;
-                    p[index] = (div[index] + p[y * width + (x - 1)] + p[y * width + (x + 1)] + 
-                                p[(y - 1) * width + x] + p[(y + 1) * width + x]) / 4.0;
-                }
-            }
-        }
-    
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-                if self.density[index] == 0.0 {
-                    continue;
-                }
-                self.velocity_x[index] -= 0.5 * (p[y * width + (x + 1)] - p[y * width + (x - 1)]) / self.density[index];
-                self.velocity_y[index] -= 0.5 * (p[(y + 1) * width + x] - p[(y - 1) * width + x]) / self.density[index];
-            }
-        }
-    }
-    fn update_density(&mut self) {
-        let width = self.width;
-        let height = self.height;
-        let mut new_density = vec![0.0; width * height];
-
-        for y in 1..height-1 {
-            for x in 1..width-1 {
-                let index = y * width + x;
-                let vel_x = self.velocity_x[index];
-                let vel_y = self.velocity_y[index];
-
-                let x_pos = x as f64 - self.time_step * vel_x;
-                let y_pos = y as f64 - self.time_step * vel_y;
-
-                let x0 = x_pos.max(0.5).min(width as f64 - 1.5).floor() as usize;
-                let y0 = y_pos.max(0.5).min(height as f64 - 1.5).floor() as usize;
-
-                let s1 = x_pos - x0 as f64;
-                let s0 = 1.0 - s1;
-                let t1 = y_pos - y0 as f64;
-                let t0 = 1.0 - t1;
-
-                new_density[index] = s0 * (t0 * self.density[y0 * width + x0] + t1 * self.density[(y0 + 1) * width + x0]) +
-                                     s1 * (t0 * self.density[y0 * width + (x0 + 1)] + t1 * self.density[(y0 + 1) * width + (x0 + 1)]);
-            }
-        }
-
-        self.density.copy_from_slice(&new_density);
     }
 }

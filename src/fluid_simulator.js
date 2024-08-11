@@ -211,6 +211,19 @@ export class FluidSimulator {
     /**
     * @returns {number}
     */
+    get time() {
+        const ret = wasm.__wbg_get_fluidsimulator_time(this.__wbg_ptr);
+        return ret;
+    }
+    /**
+    * @param {number} arg0
+    */
+    set time(arg0) {
+        wasm.__wbg_set_fluidsimulator_time(this.__wbg_ptr, arg0);
+    }
+    /**
+    * @returns {number}
+    */
     get viscosity() {
         const ret = wasm.__wbg_get_fluidsimulator_viscosity(this.__wbg_ptr);
         return ret;
@@ -401,11 +414,6 @@ export class FluidSimulator {
         return this;
     }
     /**
-    */
-    step() {
-        wasm.fluidsimulator_step(this.__wbg_ptr);
-    }
-    /**
     * @param {number} x
     * @param {number} y
     * @param {number} force_x
@@ -413,6 +421,11 @@ export class FluidSimulator {
     */
     add_force(x, y, force_x, force_y) {
         wasm.fluidsimulator_add_force(this.__wbg_ptr, x, y, force_x, force_y);
+    }
+    /**
+    */
+    step() {
+        wasm.fluidsimulator_step(this.__wbg_ptr);
     }
     /**
     * @param {string} rendering_mode
@@ -423,49 +436,11 @@ export class FluidSimulator {
         wasm.fluidsimulator_set_rendering_mode(this.__wbg_ptr, ptr0, len0);
     }
     /**
-    * @param {number} x
-    * @param {number} y
     * @returns {any}
     */
-    get_data(x, y) {
-        const ret = wasm.fluidsimulator_get_data(this.__wbg_ptr, x, y);
+    get_data() {
+        const ret = wasm.fluidsimulator_get_data(this.__wbg_ptr);
         return takeObject(ret);
-    }
-    /**
-    * @param {number} x
-    * @param {number} y
-    * @returns {Vector2D}
-    */
-    get_velocity(x, y) {
-        const ret = wasm.fluidsimulator_get_velocity(this.__wbg_ptr, x, y);
-        return Vector2D.__wrap(ret);
-    }
-    /**
-    * @param {number} x
-    * @param {number} y
-    * @returns {number}
-    */
-    get_density(x, y) {
-        const ret = wasm.fluidsimulator_get_density(this.__wbg_ptr, x, y);
-        return ret;
-    }
-    /**
-    * @param {number} x
-    * @param {number} y
-    * @returns {number}
-    */
-    get_pressure(x, y) {
-        const ret = wasm.fluidsimulator_get_pressure(this.__wbg_ptr, x, y);
-        return ret;
-    }
-    /**
-    * @param {number} x
-    * @param {number} y
-    * @returns {number}
-    */
-    get_temperature(x, y) {
-        const ret = wasm.fluidsimulator_get_temperature(this.__wbg_ptr, x, y);
-        return ret;
     }
     /**
     * @returns {string}
@@ -616,14 +591,14 @@ export class Vector2D {
     * @returns {number}
     */
     get y() {
-        const ret = wasm.__wbg_get_fluidsimulator_viscosity(this.__wbg_ptr);
+        const ret = wasm.__wbg_get_fluidsimulator_time(this.__wbg_ptr);
         return ret;
     }
     /**
     * @param {number} arg0
     */
     set y(arg0) {
-        wasm.__wbg_set_fluidsimulator_viscosity(this.__wbg_ptr, arg0);
+        wasm.__wbg_set_fluidsimulator_time(this.__wbg_ptr, arg0);
     }
     /**
     * @param {number} x

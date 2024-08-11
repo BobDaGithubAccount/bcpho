@@ -143,55 +143,36 @@
     <canvas id="challenge7_canvas" width="800" height="400"></canvas><br>
     <div id="challenge7_telemetry"></div><br>
 
-    <h2>Challenge 8</h2>
-    <p1>A numeric approach of particle motion under the influence of a fluid using navier stokes, verlet integration and prior kinematics</p1><br>
-    <label for="challenge8_angle">Launch Angle (θ):</label>
-    <input type="number" id="challenge8_angle" value="45"><br>
-    <label for="challenge8_gravity">Gravity (g):</label>
-    <input type="number" id="challenge8_gravity" value="9.81"><br>
-    <label for="challenge8_speed">Launch Speed (u):</label>
-    <input type="number" id="challenge8_speed" value="50"><br>
-    <label for="challenge8_height">Launch Height (h):</label>
-    <input type="number" id="challenge8_height" value="0"><br>
-    <label for="challenge8_mass">Particle Mass:</label>
-    <input type="number" id="challenge8_mass" value="1"><br>
-    <label for="challenge8_density">Fluid Initial Density:</label>
-    <input type="number" id="challenge8_density" value="1"><br>
-    <label for="challenge8_temperature">Fluid Initial Temperature:</label>
-    <input type="number" id="challenge8_temperature" value="293"><br>
-    <label for="challenge8_pressure">Fluid Initial Pressure:</label>
-    <input type="number" id="challenge8_pressure" value="101325"><br>
-    <label for="challenge8_viscosity">Fluid Viscosity:</label>
-    <input type="number" id="challenge8_viscosity" value="0.000018"><br>
-    <label for="challenge8_force_x">Force Application X:</label>
-    <input type="number" id="challenge8_force_x" value="50"><br>
-    <label for="challenge8_force_y">Force Application Y:</label>
-    <input type="number" id="challenge8_force_y" value="50"><br>
-    <label for="challenge8_force_magnitude_x">Force Magnitude X:</label>
-    <input type="number" id="challenge8_force_magnitude_x" value="10"><br>
-    <label for="challenge8_force_magnitude_y">Force Magnitude Y:</label>
-    <input type="number" id="challenge8_force_magnitude_y" value="10"><br>
-    <label for="challenge8_continuous_force">Continuous Force:</label>
-    <select id="challenge8_continuous_force">
-        <option value="false">False</option>
-        <option value="true">True</option>
+    <h2>Challenge CFD</h2>
+    <p1>A numeric approach of fluid flow simulation using Computational Fluid Dynamics (CFD)</p1><br>
+    <label for="challenge_cfd_angle">Launch Angle (θ):</label>
+    <input type="number" id="challenge_cfd_angle" value="45"><br>
+    <label for="challenge_cfd_gravity">Gravity (g):</label>
+    <input type="number" id="challenge_cfd_gravity" value="9.81"><br>
+    <label for="challenge_cfd_speed">Launch Speed (u):</label>
+    <input type="number" id="challenge_cfd_speed" value="50"><br>
+    <label for="challenge_cfd_height">Launch Height (h):</label>
+    <input type="number" id="challenge_cfd_height" value="0"><br>
+    <label for="challenge_cfd_meshSize">Mesh Size:</label>
+    <input type="number" id="challenge_cfd_meshSize" value="10"><br>
+    <label for="challenge_cfd_iterations">Number of Iterations:</label>
+    <input type="number" id="challenge_cfd_iterations" value="100"><br>
+    <label for="challenge_cfd_timestep">Time Step:</label>
+    <input type="number" id="challenge_cfd_timestep" value="0.1"><br>
+    <label for="challenge_cfd_viscosity">Fluid Viscosity:</label>
+    <input type="number" id="challenge_cfd_viscosity" value="0.000018"><br>
+    <label for="challenge_cfd_density">Fluid Density:</label>
+    <input type="number" id="challenge_cfd_density" value="1"><br>
+    <label for="challenge_cfd_boundary">Boundary Conditions:</label>
+    <select id="challenge_cfd_boundary">
+        <option value="inlet">Inlet</option>
+        <option value="outlet">Outlet</option>
+        <option value="wall">Wall</option>
     </select><br>
-    <label for="challenge8_telemetry">Telemetry:</label>
-    <select id="challenge8_telemetry">
-        <option value="false">False</option>
-        <option value="true">True</option>
-    </select><br>
-    <label for="challenge8_renderMode">Render Mode:</label>
-    <select id="challenge8_renderMode">
-        <option value="velocity">Velocity</option>
-        <option value="density">Density</option>
-        <option value="pressure">Pressure</option>
-        <option value="temperature">Temperature</option>
-    </select><br>
-    <button id="challenge8_run_simulation">Run simulation</button><br>
-    <button id="challenge8_stop_simulation">Stop simulation</button><br>
-    <p1 id="challenge8_logs"></p1><br>
-    <canvas id="challenge8_canvas" width="1000" height="1000"></canvas><br>
+    <button id="challenge_cfd_run_simulation">Run simulation</button><br>
+    <button id="challenge_cfd_stop_simulation">Stop simulation</button><br>
+    <p1 id="challenge_cfd_logs"></p1><br>
+    <canvas id="challenge_cfd_canvas" width="1000" height="1000"></canvas><br>
 
     <h2>Challenge Lagrangian</h2>
     <p1>A numeric approach using lagrangians and the principle of least action UNDER MAINTENANCE - CONVERGENCE PROBLEMS</p1><br>
@@ -214,6 +195,7 @@
     <script src="client_6.bundle.js"></script>
     <script src="client_7.bundle.js"></script>
     <script src="client_8.bundle.js"></script>
+    <script src="client_cfd.bundle.js"></script>
     <script src="client_lagrangian.bundle.js"></script>
   </body>
 </html>
