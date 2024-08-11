@@ -9,7 +9,6 @@
     "run": "node server.js",
     "start": "npm run build && npm run run",
     "master": "node index.js",
-    "worker": "rm -r gh-pages && mkdir gh-pages && cp -r dist/* gh-pages"
   },
   "keywords": [],
   "author": "Stanley Howard",
