@@ -5,6 +5,7 @@
   "scripts": {
     "wasm": "bash src/compile_fluidSimulator.sh",
     "build": "export NODE_PATH=$(npm root -g):$(pwd)/node_modules && rm -r dist && mkdir dist && npm run wasm && cp -r src/* dist && npx webpack",
+    "build-deploy": "mkdir dist && cp -r src/* dist && npx webpack",
     "run": "node server.js",
     "start": "npm run build && npm run run",
     "master": "node index.js",
