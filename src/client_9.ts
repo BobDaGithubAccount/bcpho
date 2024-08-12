@@ -24,7 +24,7 @@ let startX: number, startY: number;
 const draglessCurve: { points: { x: number, y: number }[] } = { points: [] };
 const dragCurve: { points: { x: number, y: number }[] } = { points: [] };
 let animationFrameId: number | null = null;
-let telemetryArray: string[] = [];
+const telemetryMap: { [key: number]: string } = {};
 
 function drawAxes(): void {
     ctx.clearRect(-canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
@@ -103,7 +103,7 @@ function calculateTrajectory(withDrag: boolean): { x: number, y: number }[] {
     return points;
 }
 
-function drawCurve(curve: { points: { x: number, y: number }[] }, color: string): void {
+function drawCurve(curve: { points: { x: number, y: number }[] }, color: string, id: number): void {
     if (!ctx) return;
 
     ctx.save();
@@ -111,11 +111,17 @@ function drawCurve(curve: { points: { x: number, y: number }[] }, color: string)
     ctx.scale(scale, scale);
 
     ctx.beginPath();
+    let arcLength = 0;
+
     for (let i = 0; i < curve.points.length; i++) {
         const point = curve.points[i];
         if (i === 0) {
             ctx.moveTo(point.x, -point.y);
         } else {
+            const prevPoint = curve.points[i - 1];
+            const dx = point.x - prevPoint.x;
+            const dy = point.y - prevPoint.y;
+            arcLength += Math.sqrt(dx * dx + dy * dy);
             ctx.lineTo(point.x, -point.y);
         }
     }
@@ -123,16 +129,21 @@ function drawCurve(curve: { points: { x: number, y: number }[] }, color: string)
     ctx.stroke();
 
     ctx.restore();
+    telemetryMap[id] = (`<p1>${color.charAt(0).toUpperCase() + color.slice(1)} Arc Length: ${Math.round(arcLength * 1000) / 1000}<p1>`);
 }
 
 function draw(): void {
-    telemetry.innerHTML = telemetryArray.join('<br>');
     draglessCurve.points = calculateTrajectory(false);
     dragCurve.points = calculateTrajectory(true);
     drawAxes();
-    drawCurve(draglessCurve, 'blue');
-    drawCurve(dragCurve, 'red');
-    telemetryArray = [];
+    drawCurve(draglessCurve, 'blue', 1);
+    drawCurve(dragCurve, 'red', 2);
+    let toAdd: string = '';
+    for (const key in telemetryMap) {
+        const telemetryEntry = telemetryMap[key];
+        toAdd += telemetryEntry + "<br>";
+    }
+    telemetry.innerHTML = toAdd;
 }
 
 function animate(): void {
@@ -237,8 +248,7 @@ function handleMouseMove(e: MouseEvent): void {
 
     ctx.restore();
 
-    telemetryArray.push(`<p1>Dragless (BLUE): x=${nearestDraglessPoint.x}, y=${nearestDraglessPoint.y}</p1>`);
-    telemetryArray.push(`<p1>Drag (RED): x=${nearestDragPoint.x}, y=${nearestDragPoint.y}</p1>`);
+    telemetryMap[0] = (`<p1>Dragless (BLUE): x=${nearestDraglessPoint.x}, y=${nearestDraglessPoint.y}</p1><br><p1>Drag (RED): x=${nearestDragPoint.x}, y=${nearestDragPoint.y}</p1>`);
 }
 
 function handleMouseUp(): void {
@@ -263,10 +273,16 @@ function handleModeChange(): void {
 gravityInput.addEventListener('input', handleModeChange);
 heightInput.addEventListener('input', handleModeChange);
 speedInput.addEventListener('input', handleModeChange);
+angleInput.addEventListener('input', handleModeChange);
+dragCoefficientInput.addEventListener('input', handleModeChange);
+airDensityInput.addEventListener('input', handleModeChange);
+areaInput.addEventListener('input', handleModeChange);
+massInput.addEventListener('input', handleModeChange);
 corInput.addEventListener('input', handleModeChange);
 bounceInput.addEventListener('input', handleModeChange);
-angleInput.addEventListener('input', handleModeChange);
 modeInput.addEventListener('input', handleModeChange);
+telemetry.addEventListener('input', handleModeChange);
+
 
 canvas.addEventListener('mousedown', handleMouseDown);
 canvas.addEventListener('mousemove', handleMouseMove);
